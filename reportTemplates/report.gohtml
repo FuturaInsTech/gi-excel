@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Group Quote Info</title>
+    <style>
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .header1 {
+            text-align: center;
+            margin-bottom: 2px;
+        }
+        .box {
+            border: 2px solid #000;
+            padding: 5px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+        .box1 {
+            border: 2px solid #000;
+            padding: 10px;
+            width: 100%; /* 100% width */
+            box-sizing: border-box;
+            margin-bottom: 10px;
+            display: flex;
+        }
+        .info-section {
+            width: 50%; /* Each section takes up 50% of the width */
+            box-sizing: border-box;
+            padding: 10px;
+        }
+        .vertical-line {
+            border-left: 2px solid #000;
+            height: auto;
+            margin: 0 20px; /* Optional: Add space around the line */
+        }
+        .info-row {
+            display: flex;
+            align-items: center;
+            position: relative;
+            margin-bottom: 10px;
+        }
+        .status-container {
+            position: absolute;
+            left: 40%;
+            transform: translateX(-70%);
+            text-align: center;
+            width: 150px;
+            white-space: nowrap;
+        }
+        .product-container {
+            position: absolute;
+            right: 0;
+            text-align: right;
+            top: -4px;
+        }
+        .product1-container {
+            position: absolute;
+            right: 0;
+            text-align: right;
+            top: -20px;
+        }
+        .info-row > p {
+            margin: 0;
+        }
+        .flex-container {
+            display: flex;
+            justify-content: space-between; /* Distribute space between items */
+        }
+        table {
+            width: 100%; /* Make the table span the full width of its container */
+            border-collapse: collapse; /* Collapse borders into a single border */
+        }
+        th, td {
+            border: 1px solid #000; /* Add borders to table cells */
+            padding: 8px; /* Add padding inside cells */
+            text-align: left; /* Align text to the left */
+        }
+         .benefits-heading {
+            text-align: center; /* Center the heading */
+            margin-top: 5px; /* Add space above the heading */
+            margin-bottom: 10px; /* Add space below the heading */
+        }
+         .companyinfo {
+            text-align: center; /* Center the heading */
+            margin-top: 5px; /* Add space above the heading */
+            margin-bottom: 1px; /* Add space below the heading */
+        }
+        .line {
+            border: none;
+            height: 1px;
+            background-color: #000; /* Black line color */
+            margin: 20px 0; /* Space above and below the line */
+        }
+        .basic {
+            flex: 1;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .vertical-line {
+            width: 2px;
+            margin: 0 10px;
+        }
+        .basic-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .label {
+            font-weight: bold;
+            width: 200px; /* Adjust width to ensure consistent alignment */
+            white-space: nowrap; /* Prevent line breaks */
+        }
+        .separator {
+            margin: 0 10px;
+        }
+        .value {
+            flex-grow: 1;
+        }
+        .benefits-heading {
+            text-align: center;
+            margin-top: 5px;
+            margin-bottom: 10px;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+            .page-break {
+            page-break-before: always; /* Ensure content starts on a new page */
+        }
+         .company-logo {
+            width: 78px; /* Set the desired width */
+            height: auto; /* Maintain aspect ratio */
+            display: flex;
+            margin: 0 auto; /* Center the image horizontally */
+            /* Adjust position */
+            margin-left: 20px; /* Move the image right by 20px */
+        }
+    </style>
+</head>
+<body>
+    <h1 class="header">Group Quote Info</h1>
+      <div class="box">
+        <div class="info-row">
+            <p><strong>Company Name:</strong>{{.CompanyName}}</p>
+           
+            <div class="product-container">
+            <img class="company-logo"  src="data:image/png;base64,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" alt="Company Logo">
+            </div>
+
+        </div>
+        <p><strong>Company Country:</strong> {{.CompanyCountry}}</p>
+    </div>
+ </br>
+    <div class="box">
+        <div class="info-row">
+            <p><strong>Quotation ID:</strong> {{.QuotationID}}</p>
+            <div class="product1-container">
+                <p><strong>Product:</strong> {{.Product}}</p>
+                <p><strong>Status:</strong> Create Quote</p>
+            </div>
+        </div>
+        <div class="info-row">
+            <p><strong>Employer Name:</strong>{{.EmployerName}}</p>
+     <!--
+<div class="substatus-container">
+    <p><strong>Sub Status:</strong> </p>
+</div>
+-->
+
+    </div>
+    </div>
+ </br>
+    <div class="box1">
+    <h3 class="benefits-heading">Basic Information</h3>
+       <table>
+    <tr>
+        <th style="text-align: left;">Employer Name</th>
+        <td style="text-align: left;">{{.EmployerName}}</td>
+        <th style="text-align: left;">Employer Email</th>
+        <td style="text-align: left;">{{.EmployerEmail}}</td>
+    </tr>
+    <tr>
+        <th style="text-align: left;">Bdm ID</th>
+        <td style="text-align: left;">{{.BdmID}}</td>
+        <th style="text-align: left;">Bdm Name</th>
+        <td style="text-align: left;">{{.BdmName}}</td>
+    </tr>
+    <tr>
+        <th style="text-align: left;">Company Type</th>
+        <td style="text-align: left;">{{.CompanyType}}</td>
+        <th style="text-align: left;">Product</th>
+        <td style="text-align: left;">{{.Product}}</td>
+    </tr>
+    <tr>
+        <th style="text-align: left;">Company Inc Date</th>
+        <td style="text-align: left;">{{.CompanyInc}}</td>
+        <th style="text-align: left;">Company MOA</th>
+        <td style="text-align: left;">{{.CompanyMoa}}</td>
+    </tr>
+    <tr>
+        <th style="text-align: left;">Company AOA</th>
+        <td style="text-align: left;">{{.CompanyAoa}}</td>
+    </tr>
+</table>
+    </div>
+     </br>
+    <div class="box1">
+    <h3 class="benefits-heading">Risk Information</h3>
+       <table>
+    <tr>
+        <th style="text-align: left;">Effective Date</th>
+        <td style="text-align: left;">{{.EffDate}}</td>
+        <th style="text-align: left;">End Date</th>
+        <td style="text-align: left;">{{.EndDate}}</td>
+    </tr>
+    <tr>
+        <th style="text-align: left;">Application Date</th>
+        <td style="text-align: left;">{{.ApplicationDate}}</td>
+        <th style="text-align: left;">Next Date</th>
+        <td style="text-align: left;">{{.NextDate}}</td>
+    </tr>
+    <tr>
+        <th style="text-align: left;">Prem Frequency</th>
+        <td style="text-align: left;">{{.Frequency}}</td>
+    </tr>
+
+</table>
+    </div>
+    </br>
+    
+     <div class="box">
+      <h3 class="benefits-heading">Benefits</h3>
+   <table>
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Product Description</th>
+            <th>Total Premium</th>
+            <th>Total GST</th>
+            <th>Gross Premium</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Iterate over the Products array -->
+        {{range .Products}}
+        <tr>
+            <td>{{.Product}}</td>
+            <td>{{.ProductDes}}</td>
+            <td style="text-align: right;">{{.TotalPremium}}</td>
+            <td style="text-align: right;">{{.TotalGst}}</td>
+            <td style="text-align: right;">{{.GrossPremium}}</td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+
+    </div>
+    </br>
+    <div class="box">
+    <h3 class="benefits-heading">Exclusion Clause</h3>
+    <p>
+        <!-- Iterate over the QuoteClauseDescriptions map -->
+        {{range $key, $value := .QuoteClauseDescriptions}}
+            <strong>{{$key}}:</strong> {{$value}}<br>
+        {{end}}
+    </p>
+</div>
+   <!--<div class="page-break"></div>-->
+      <h3 class="benefits-heading">Members</h3>
+    <table>
+    <thead>
+        <tr>
+            <th>EmployerId</th>
+            <th>Name</th>
+            <!--<th>Dob</th>-->
+            <th>Date of Joining</th>
+            <th>Designation</th>
+            <th>Fcl</th>
+            <th>premium</th>
+            <th>Gst</th>
+            <th>AddSumassured</th>
+            <th>AddGst</th>
+            <th>AddPremium</th>
+           
+    </thead>
+    <tbody>
+        {{range .Gmembers}}
+        <tr>
+            <td>{{.EmployerId}}</td>
+            <td>{{.Name}}</td>
+            <!--<td>{{.Dob}}</td>-->
+            <td>{{.Doj}}</td>
+            <td>{{.Desingnation}}</td>
+             <td style="text-align: right;">{{.Fcl}}</td>
+            <td style="text-align: right;">{{.Premium}}</td>
+            <td style="text-align: right;">{{.gst}}</td>
+            <td style="text-align: right;">{{.AddSumassured}}</td>
+            <td style="text-align: right;">{{.AddGst}}</td>
+            <td style="text-align: right;">{{.AddPremium}}</td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+</body>
+</html>
