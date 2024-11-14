@@ -35,6 +35,7 @@ const (
 	TwoDArray
 	OneDMap
 	TwoDMap
+	TwoDArrayMap
 )
 
 type ServiceFieldMode uint8

@@ -229,6 +229,49 @@ func ProcessExcel1(c *gin.Context) {
 
 					}
 
+				case types.TwoDArrayMap:
+					var innerkeys []string
+
+					// Unmarshal JSON string to a slice of strings
+
+					err := json.Unmarshal([]byte(field.InnerKeys), &innerkeys)
+					if err != nil {
+						fmt.Println("Error:Unable parse the map inner keys: ", err)
+					}
+
+					valArray := val.([]interface{})
+					opArray := make([]interface{}, 0)
+
+					for _, value := range valArray {
+
+						opArray1 := make([]interface{}, 0)
+						for _, mapkey := range innerkeys {
+
+							value2 := value.(map[string]interface{})
+
+							if value3, exists := value2[mapkey]; exists {
+
+								opArray1 = append(opArray1, value3)
+
+							} else {
+
+								opArray1 = append(opArray1, nil)
+
+							}
+						}
+
+						opArray = append(opArray, opArray1)
+
+					}
+					if field.Orientation == types.Horizontal {
+
+						inputMap[field.ExcelName] = opArray
+					} else {
+
+						inputMap[field.ExcelName] = utilities.Transpose(opArray)
+
+					}
+
 				default:
 					c.JSON(http.StatusBadRequest, gin.H{
 						"error": "unknown data type for input json field " + field.JsonName,
@@ -360,6 +403,39 @@ func ProcessExcel1(c *gin.Context) {
 
 			// formatted_outputmap[field.JsonName] = outputvalMap
 			utilities.AddNestedValue(formatted_outputmap, field.JsonName, outputvalMap)
+		case types.TwoDArrayMap:
+			var innerkeys []string
+
+			// Unmarshal JSON string to a slice of strings
+
+			err = json.Unmarshal([]byte(field.InnerKeys), &innerkeys)
+			if err != nil {
+				fmt.Println("Error:Unable parse the map inner keys: ", err)
+			}
+
+			var valArray [][]interface{}
+
+			if field.Orientation == types.Horizontal {
+
+				valArray = outputMap[key].([][]interface{})
+			} else {
+
+				valArray = utilities.Transpose1(outputMap[key].([][]interface{}))
+
+			}
+
+			outputvalArray := make([]interface{}, 0)
+			for _, value := range valArray {
+				outputvalMap1 := make(map[string]interface{})
+				for j, mapkey2 := range innerkeys {
+					outputvalMap1[mapkey2] = value[j]
+				}
+				outputvalArray = append(outputvalArray, outputvalMap1)
+
+			}
+
+			// formatted_outputmap[field.JsonName] = outputvalArray
+			utilities.AddNestedValue(formatted_outputmap, field.JsonName, outputvalArray)
 
 		default:
 			c.JSON(http.StatusBadRequest, gin.H{
