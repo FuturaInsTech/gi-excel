@@ -1,4 +1,4 @@
-package paramTypes
+package excelparamTypes
 
 import (
 	"encoding/json"

@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/FuturaInsTech/gi-excel/excelparamTypes"
 	"github.com/FuturaInsTech/gi-excel/exceltypes"
-	"github.com/FuturaInsTech/gi-excel/paramTypes"
 )
 
-func ExcelProcessor(serviceName string, requestMap map[string]interface{}, e0001data paramTypes.E0001Data, e0002data paramTypes.E0002Data) (map[string]interface{}, error) {
-	outputfieldDataMap := make(map[string]paramTypes.E0002)
+func ExcelProcessor(serviceName string, requestMap map[string]interface{}, e0001data excelparamTypes.E0001Data, e0002data excelparamTypes.E0002Data) (map[string]interface{}, error) {
+	outputfieldDataMap := make(map[string]excelparamTypes.E0002)
 	outputFields := make([]interface{}, 0)
 	inputMap := make(map[string]interface{})
 
