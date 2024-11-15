@@ -1,131 +1,37 @@
-package excel
+package excelmanagement
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"net/http"
 
-	"github.com/FuturaInsTech/GoExcel/models"
+	"github.com/FuturaInsTech/GoExcel/exceltypes"
 	"github.com/FuturaInsTech/GoExcel/paramTypes"
-	"github.com/FuturaInsTech/GoExcel/types"
-	"github.com/FuturaInsTech/GoExcel/utilities"
-	"github.com/gin-gonic/gin"
 )
 
-func ProcessExcel(c *gin.Context) {
-
-	var req models.RequestData
-
-	// Bind the incoming JSON to the RequestData struct
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	inputMap := make(map[string]interface{})
-
-	inputMap["p_product"] = []interface{}{[]interface{}{req.Product}}
-	inputMap["p_sa"] = []interface{}{[]interface{}{req.SumAssured}}
-	inputMap["p_term"] = []interface{}{[]interface{}{req.Term}}
-	inputMap["p_dob"] = []interface{}{[]interface{}{req.Dob}}
-	inputMap["p_gender"] = []interface{}{[]interface{}{req.Gender}}
-	inputMap["p_startdate"] = []interface{}{[]interface{}{req.StartDate}}
-	inputMap["p_basiccoverage"] = []interface{}{[]interface{}{req.Coverage}}
-	inputMap["p_ppt"] = []interface{}{[]interface{}{req.Ppt}}
-	inputMap["p_freq"] = []interface{}{[]interface{}{req.Freq}}
-	inputMap["p_smoker"] = []interface{}{[]interface{}{req.Smoker}}
-
-	outputNames := []interface{}{"p_premium", "p_age", "c_age", "c_prem", "c_term"}
-
-	excelmanager, err := utilities.NewExcelManager("D:\\Go\\END.xlsx")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "failed to get excel manager" + err.Error(),
-		})
-
-		return
-	}
-
-	defer excelmanager.Close()
-
-	outputMap, err := excelmanager.NamedRangeSetAndGet(inputMap, outputNames)
-	if err != nil {
-
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "failed to get results:" + err.Error(),
-		})
-
-		return
-	}
-
-	// Return success response
-	c.JSON(http.StatusOK, gin.H{
-		"Result": outputMap,
-	})
-}
-
-func ProcessExcel1(c *gin.Context) {
-	var requestMap map[string]interface{}
-	if c.Bind(&requestMap) != nil {
-
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "unable to bind values",
-		})
-
-		return
-	}
-
-	serviceName := c.Param("serviceName")
-
-	iDate := "20240101"
-
-	var e0001data paramTypes.E0001Data
-	var extradataE0001 paramTypes.Extradata = &e0001data
-	err := utilities.GetItemD(1, "E0001", serviceName, iDate, &extradataE0001)
-	if err != nil {
-
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Service Not Found" + err.Error(),
-		})
-		return
-
-	}
-
-	var e0002data paramTypes.E0002Data
-	var extradataE0002 paramTypes.Extradata = &e0002data
-
-	err = utilities.GetItemD(1, "E0002", serviceName, iDate, &extradataE0002)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Service Not Found" + err.Error(),
-		})
-	}
+func ExcelProcessor(serviceName string, requestMap map[string]interface{}, e0001data paramTypes.E0001Data, e0002data paramTypes.E0002Data) (map[string]interface{}, error) {
 	outputfieldDataMap := make(map[string]paramTypes.E0002)
 	outputFields := make([]interface{}, 0)
 	inputMap := make(map[string]interface{})
 
 	for _, field := range e0002data.FieldArray {
 		fmt.Println(field.Mandatory, "**********************")
-		if field.FieldMode == types.Input {
+		if field.FieldMode == exceltypes.Input {
 			// val, ok := requestMap[field.JsonName]
-			val, err := utilities.GetNestedValue(requestMap, field.JsonName)
+			val, err := GetNestedValue(requestMap, field.JsonName)
 			// If the key does not exist error
 			if err != nil {
 				if field.Mandatory {
-					c.JSON(http.StatusBadRequest, gin.H{
-						"error": "mandatory field " + field.JsonName + " must be present in input",
-					})
-
-					return
+					return nil, err
 				}
 				// If the key exist proceed
 			} else {
 
 				switch field.FieldType {
-				case types.Single:
+				case exceltypes.Single:
 					inputMap[field.ExcelName] = []interface{}{[]interface{}{val}}
-				case types.OneDArray:
-					if field.Orientation == types.Horizontal {
+				case exceltypes.OneDArray:
+					if field.Orientation == exceltypes.Horizontal {
 						inputMap[field.ExcelName] = []interface{}{val.([]interface{})}
 					} else {
 						array := val.([]interface{})
@@ -138,15 +44,15 @@ func ProcessExcel1(c *gin.Context) {
 						inputMap[field.ExcelName] = interfaceSlice
 					}
 
-				case types.TwoDArray:
-					if field.Orientation == types.Horizontal {
+				case exceltypes.TwoDArray:
+					if field.Orientation == exceltypes.Horizontal {
 						inputMap[field.ExcelName] = val
 
 					} else {
 
-						inputMap[field.ExcelName] = utilities.Transpose(val.([]interface{}))
+						inputMap[field.ExcelName] = Transpose(val.([]interface{}))
 					}
-				case types.OneDMap:
+				case exceltypes.OneDMap:
 					var outerkeys []string
 
 					// Unmarshal JSON string to a slice of strings
@@ -165,7 +71,7 @@ func ProcessExcel1(c *gin.Context) {
 							valArray = append(valArray, nil)
 						}
 					}
-					if field.Orientation == types.Horizontal {
+					if field.Orientation == exceltypes.Horizontal {
 
 						inputMap[field.ExcelName] = []interface{}{valArray}
 					} else {
@@ -178,7 +84,7 @@ func ProcessExcel1(c *gin.Context) {
 
 					}
 
-				case types.TwoDMap:
+				case exceltypes.TwoDMap:
 					var outerkeys []string
 					var innerkeys []string
 
@@ -220,16 +126,16 @@ func ProcessExcel1(c *gin.Context) {
 							valArray = append(valArray, nil)
 						}
 					}
-					if field.Orientation == types.Horizontal {
+					if field.Orientation == exceltypes.Horizontal {
 
 						inputMap[field.ExcelName] = valArray
 					} else {
 
-						inputMap[field.ExcelName] = utilities.Transpose(valArray)
+						inputMap[field.ExcelName] = Transpose(valArray)
 
 					}
 
-				case types.TwoDArrayMap:
+				case exceltypes.TwoDArrayMap:
 					var innerkeys []string
 
 					// Unmarshal JSON string to a slice of strings
@@ -263,20 +169,18 @@ func ProcessExcel1(c *gin.Context) {
 						opArray = append(opArray, opArray1)
 
 					}
-					if field.Orientation == types.Horizontal {
+					if field.Orientation == exceltypes.Horizontal {
 
 						inputMap[field.ExcelName] = opArray
 					} else {
 
-						inputMap[field.ExcelName] = utilities.Transpose(opArray)
+						inputMap[field.ExcelName] = Transpose(opArray)
 
 					}
 
 				default:
-					c.JSON(http.StatusBadRequest, gin.H{
-						"error": "unknown data type for input json field " + field.JsonName,
-					})
-					return
+					iErrDesc := "unknown data type for input json field " + field.JsonName
+					return nil, errors.New(iErrDesc)
 				}
 
 			}
@@ -288,37 +192,28 @@ func ProcessExcel1(c *gin.Context) {
 		}
 	}
 
-	excelmanager, err := utilities.NewExcelManager(e0001data.ExcelPath)
+	excelmanager, err := NewExcelManager(e0001data.ExcelPath)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "failed to get excel manager" + err.Error(),
-		})
-
-		return
+		return nil, err
 	}
 
 	defer excelmanager.Close()
 
 	outputMap, err := excelmanager.NamedRangeSetAndGet(inputMap, outputFields)
 	if err != nil {
-
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "failed to get results:" + err.Error(),
-		})
-
-		return
+		return nil, err
 	}
 	formatted_outputmap := make(map[string]interface{})
 	for key, field := range outputfieldDataMap {
 
 		switch field.FieldType {
-		case types.Single:
+		case exceltypes.Single:
 			// formatted_outputmap[field.JsonName] = outputMap[key].([][]interface{})[0][0]
-			utilities.AddNestedValue(formatted_outputmap, field.JsonName, outputMap[key].([][]interface{})[0][0])
-		case types.OneDArray:
-			if field.Orientation == types.Horizontal {
+			AddNestedValue(formatted_outputmap, field.JsonName, outputMap[key].([][]interface{})[0][0])
+		case exceltypes.OneDArray:
+			if field.Orientation == exceltypes.Horizontal {
 				// formatted_outputmap[field.JsonName] = outputMap[key].([][]interface{})[0]
-				utilities.AddNestedValue(formatted_outputmap, field.JsonName, outputMap[key].([][]interface{})[0][0])
+				AddNestedValue(formatted_outputmap, field.JsonName, outputMap[key].([][]interface{})[0][0])
 			} else {
 				array := outputMap[key].([][]interface{})
 				interfaceSlice := make([]interface{}, len(array))
@@ -328,20 +223,20 @@ func ProcessExcel1(c *gin.Context) {
 					interfaceSlice[i] = v[0]
 				}
 				// formatted_outputmap[field.JsonName] = interfaceSlice
-				utilities.AddNestedValue(formatted_outputmap, field.JsonName, interfaceSlice)
+				AddNestedValue(formatted_outputmap, field.JsonName, interfaceSlice)
 			}
 
-		case types.TwoDArray:
-			if field.Orientation == types.Horizontal {
+		case exceltypes.TwoDArray:
+			if field.Orientation == exceltypes.Horizontal {
 				// formatted_outputmap[field.JsonName] = outputMap[key]
-				utilities.AddNestedValue(formatted_outputmap, field.JsonName, outputMap[key])
+				AddNestedValue(formatted_outputmap, field.JsonName, outputMap[key])
 
 			} else {
 
-				// formatted_outputmap[field.JsonName] = utilities.Transpose1(outputMap[key].([][]interface{}))
-				utilities.AddNestedValue(formatted_outputmap, field.JsonName, utilities.Transpose1(outputMap[key].([][]interface{})))
+				// formatted_outputmap[field.JsonName] = Transpose1(outputMap[key].([][]interface{}))
+				AddNestedValue(formatted_outputmap, field.JsonName, Transpose1(outputMap[key].([][]interface{})))
 			}
-		case types.OneDMap:
+		case exceltypes.OneDMap:
 			var outerkeys []string
 
 			// Unmarshal JSON string to a slice of strings
@@ -352,7 +247,7 @@ func ProcessExcel1(c *gin.Context) {
 
 			outputvalMap := make(map[string]interface{})
 
-			if field.Orientation == types.Horizontal {
+			if field.Orientation == exceltypes.Horizontal {
 				for i, val := range outputMap[key].([][]interface{})[0] {
 					outputvalMap[outerkeys[i]] = val
 				}
@@ -364,9 +259,9 @@ func ProcessExcel1(c *gin.Context) {
 
 			}
 			// formatted_outputmap[field.JsonName] = outputvalMap
-			utilities.AddNestedValue(formatted_outputmap, field.JsonName, outputvalMap)
+			AddNestedValue(formatted_outputmap, field.JsonName, outputvalMap)
 
-		case types.TwoDMap:
+		case exceltypes.TwoDMap:
 			var outerkeys []string
 			var innerkeys []string
 
@@ -383,12 +278,12 @@ func ProcessExcel1(c *gin.Context) {
 
 			var valArray [][]interface{}
 
-			if field.Orientation == types.Horizontal {
+			if field.Orientation == exceltypes.Horizontal {
 
 				valArray = outputMap[key].([][]interface{})
 			} else {
 
-				valArray = utilities.Transpose1(outputMap[key].([][]interface{}))
+				valArray = Transpose1(outputMap[key].([][]interface{}))
 
 			}
 
@@ -402,8 +297,8 @@ func ProcessExcel1(c *gin.Context) {
 			}
 
 			// formatted_outputmap[field.JsonName] = outputvalMap
-			utilities.AddNestedValue(formatted_outputmap, field.JsonName, outputvalMap)
-		case types.TwoDArrayMap:
+			AddNestedValue(formatted_outputmap, field.JsonName, outputvalMap)
+		case exceltypes.TwoDArrayMap:
 			var innerkeys []string
 
 			// Unmarshal JSON string to a slice of strings
@@ -415,12 +310,12 @@ func ProcessExcel1(c *gin.Context) {
 
 			var valArray [][]interface{}
 
-			if field.Orientation == types.Horizontal {
+			if field.Orientation == exceltypes.Horizontal {
 
 				valArray = outputMap[key].([][]interface{})
 			} else {
 
-				valArray = utilities.Transpose1(outputMap[key].([][]interface{}))
+				valArray = Transpose1(outputMap[key].([][]interface{}))
 
 			}
 
@@ -435,20 +330,15 @@ func ProcessExcel1(c *gin.Context) {
 			}
 
 			// formatted_outputmap[field.JsonName] = outputvalArray
-			utilities.AddNestedValue(formatted_outputmap, field.JsonName, outputvalArray)
+			AddNestedValue(formatted_outputmap, field.JsonName, outputvalArray)
 
 		default:
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "unknown data type for json field " + field.JsonName,
-			})
-			return
+			iErrDesc := "unknown data type for input json field " + field.JsonName
+			return nil, errors.New(iErrDesc)
 
 		}
 
 	}
 
-	// Return success response
-	c.JSON(http.StatusOK, gin.H{
-		"Output": formatted_outputmap,
-	})
+	return formatted_outputmap, nil
 }
