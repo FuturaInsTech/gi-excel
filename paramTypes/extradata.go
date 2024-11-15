@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/FuturaInsTech/GoExcel/exceltypes"
+	"github.com/FuturaInsTech/gi-excel/exceltypes"
 )
 
 type Extradata interface {
