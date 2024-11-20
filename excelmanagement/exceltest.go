@@ -9,8 +9,9 @@ import (
 	"github.com/FuturaInsTech/gi-excel/exceltypes"
 )
 
-func ExcelProcessor(serviceName string, requestMap map[string]interface{}, e0001data excelparamTypes.E0001Data, e0002data excelparamTypes.E0002Data) (map[string]interface{}, error) {
+func ExcelProcessor(serviceName string, requestMap map[string]interface{}, e0001data excelparamTypes.E0001Data, e0002data excelparamTypes.E0002Data) (map[string]interface{}, bool, error) {
 	outputfieldDataMap := make(map[string]excelparamTypes.E0002)
+	errorfieldDataMap := make(map[string]excelparamTypes.E0002)
 	outputFields := make([]interface{}, 0)
 	inputMap := make(map[string]interface{})
 
@@ -22,7 +23,7 @@ func ExcelProcessor(serviceName string, requestMap map[string]interface{}, e0001
 			// If the key does not exist error
 			if err != nil {
 				if field.Mandatory {
-					return nil, err
+					return nil, false, err
 				}
 				// If the key exist proceed
 			} else {
@@ -180,13 +181,17 @@ func ExcelProcessor(serviceName string, requestMap map[string]interface{}, e0001
 
 				default:
 					iErrDesc := "unknown data type for input json field " + field.JsonName
-					return nil, errors.New(iErrDesc)
+					return nil, false, errors.New(iErrDesc)
 				}
 
 			}
 		} else {
 
-			outputfieldDataMap[field.ExcelName] = field
+			if field.FieldMode == exceltypes.Error {
+				errorfieldDataMap[field.ExcelName] = field
+			} else {
+				outputfieldDataMap[field.ExcelName] = field
+			}
 			outputFields = append(outputFields, field.ExcelName)
 
 		}
@@ -194,15 +199,60 @@ func ExcelProcessor(serviceName string, requestMap map[string]interface{}, e0001
 
 	excelmanager, err := NewExcelManager(e0001data.ExcelPath)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	defer excelmanager.Close()
 
 	outputMap, err := excelmanager.NamedRangeSetAndGet(inputMap, outputFields)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
+
+	formatted_errormap := make(map[string]interface{})
+
+	errexists := false
+	for key, field := range errorfieldDataMap {
+		var outerkeys []string
+
+		// Unmarshal JSON string to a slice of strings
+		err := json.Unmarshal([]byte(field.OuterKeys), &outerkeys)
+		if err != nil {
+			fmt.Println("Error:Unable parse the map keys: ", err)
+		}
+
+		outputvalMap := make(map[string]interface{})
+
+		if field.Orientation == exceltypes.Horizontal {
+			errValues := outputMap[key].([][]interface{})[0]
+
+			for i, val := range outerkeys {
+				outputvalMap[val] = errValues[i]
+			}
+			if errValues[2] == "Y" {
+				errexists = true
+			}
+
+		} else {
+			errValues := outputMap[key].([][]interface{})
+
+			for i, val := range outerkeys {
+				outputvalMap[val] = errValues[i][0]
+			}
+
+			if errValues[2][0] == "Y" {
+				errexists = true
+			}
+
+		}
+		// formatted_outputmap[field.JsonName] = outputvalMap
+		AddNestedValue(formatted_errormap, field.JsonName, outputvalMap)
+	}
+
+	if errexists {
+		return formatted_errormap, errexists, nil
+	}
+
 	formatted_outputmap := make(map[string]interface{})
 	for key, field := range outputfieldDataMap {
 
@@ -334,11 +384,11 @@ func ExcelProcessor(serviceName string, requestMap map[string]interface{}, e0001
 
 		default:
 			iErrDesc := "unknown data type for input json field " + field.JsonName
-			return nil, errors.New(iErrDesc)
+			return nil, false, errors.New(iErrDesc)
 
 		}
 
 	}
 
-	return formatted_outputmap, nil
+	return formatted_outputmap, false, nil
 }

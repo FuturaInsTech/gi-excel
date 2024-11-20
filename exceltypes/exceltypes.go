@@ -16,6 +16,7 @@ type ServiceFieldMode uint8
 const (
 	Input ServiceFieldMode = iota
 	Output
+	Error
 )
 
 type ServiceFieldOrient uint8
