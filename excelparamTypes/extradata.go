@@ -14,7 +14,8 @@ type Extradata interface {
 }
 
 type E0001Data struct {
-	ExcelPath string
+	ExcelPath    string
+	TemplatePath string
 }
 
 func (m *E0001Data) ParseData(datamap map[string]interface{}) {
