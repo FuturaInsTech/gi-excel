@@ -261,3 +261,109 @@ func GetNestedValue(jsonMap map[string]interface{}, key string) (interface{}, er
 
 	return nil, errors.New("unexpected error")
 }
+
+func (m *ExcelManager) NamedRangeSetAndGet1(inputkeys []string, inputvalues [][]interface{}, outputkeys []string) ([][]interface{}, error) {
+	//process input
+	rowsInp := make(map[string]*ole.IDispatch)
+	rowsCountInp := make(map[string]int)
+	colsCountInp := make(map[string]int)
+	rowsOp := make(map[string]*ole.IDispatch)
+	rowsCountOp := make(map[string]int)
+	colsCountOp := make(map[string]int)
+
+	output := make([][]interface{}, len(inputvalues))
+	for _, key := range inputkeys {
+		namedRange := oleutil.MustCallMethod(m.names, "Item", key).ToIDispatch()
+		rangeObj := oleutil.MustGetProperty(namedRange, "RefersToRange").ToIDispatch()
+		rowsInp[key] = oleutil.MustGetProperty(rangeObj, "Rows").ToIDispatch()
+		columns := oleutil.MustGetProperty(rangeObj, "Columns").ToIDispatch()
+		rowsCountInp[key] = int(oleutil.MustGetProperty(rowsInp[key], "Count").Val) // Get number of rows
+		colsCountInp[key] = int(oleutil.MustGetProperty(columns, "Count").Val)      // Get number of columns
+		columns.Release()
+		namedRange.Release()
+		rangeObj.Release()
+	}
+
+	for _, key := range outputkeys {
+		namedRange := oleutil.MustCallMethod(m.names, "Item", key).ToIDispatch()
+		rangeObj := oleutil.MustGetProperty(namedRange, "RefersToRange").ToIDispatch()
+		rowsOp[key] = oleutil.MustGetProperty(rangeObj, "Rows").ToIDispatch()
+		columns := oleutil.MustGetProperty(rangeObj, "Columns").ToIDispatch()
+		rowsCountOp[key] = int(oleutil.MustGetProperty(rowsOp[key], "Count").Val) // Get number of rows
+		colsCountOp[key] = int(oleutil.MustGetProperty(columns, "Count").Val)     // Get number of columns
+		columns.Release()
+		namedRange.Release()
+		rangeObj.Release()
+	}
+
+	for rowind, inputValue := range inputvalues {
+
+		for ind, value := range inputValue {
+			rows := rowsInp[inputkeys[ind]]
+			rowCount := rowsCountInp[inputkeys[ind]]    // Get number of rows
+			columnCount := colsCountInp[inputkeys[ind]] // Get number of columns
+			input2dArray := make([][]interface{}, 0)
+			for _, val := range value.([]interface{}) {
+
+				input2dArray = append(input2dArray, val.([]interface{}))
+
+			}
+			inputRowCount := len(input2dArray)
+			inputColCount := len(input2dArray[0])
+			if inputRowCount > rowCount || inputColCount > columnCount {
+				return nil, errors.New("input size mismatch with named range for " + inputkeys[ind])
+			}
+
+			for i := 1; i <= inputRowCount; i++ {
+				//skip some elements if no value provided
+				if input2dArray[i-1] == nil {
+					continue
+				}
+				for j := 1; j <= inputColCount; j++ {
+					//skip some elements if no value provided
+					if input2dArray[i-1][j-1] == nil {
+						continue
+					}
+					row := oleutil.MustGetProperty(rows, "Item", i).ToIDispatch()
+					cell := oleutil.MustGetProperty(row, "Item", j).ToIDispatch()
+					oleutil.MustPutProperty(cell, "Value", input2dArray[i-1][j-1])
+					cell.Release()
+					row.Release()
+				}
+			}
+
+		}
+		output[rowind] = make([]interface{}, len(outputkeys))
+		for ind1, value := range outputkeys {
+			rows := rowsOp[value]
+			rowCount := rowsCountOp[value]    // Get number of rows
+			columnCount := colsCountOp[value] // Get number of columns
+			valueArray := make([][]interface{}, rowCount)
+			for i := 1; i <= rowCount; i++ {
+				valueArray[i-1] = make([]interface{}, columnCount)
+				for j := 1; j <= columnCount; j++ {
+					row := oleutil.MustGetProperty(rows, "Item", i).ToIDispatch()
+					cell := oleutil.MustGetProperty(row, "Item", j).ToIDispatch()
+					valueArray[i-1][j-1] = oleutil.MustGetProperty(cell, "Value").Value()
+					cell.Release()
+					row.Release()
+				}
+			}
+			output[rowind][ind1] = valueArray
+
+		}
+
+	}
+
+	//release all aquired rows both input and output
+	for _, val := range rowsInp {
+		val.Release()
+	}
+
+	for _, val := range rowsOp {
+		val.Release()
+	}
+
+	return output, nil
+
+}
