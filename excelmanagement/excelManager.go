@@ -255,7 +255,8 @@ func GetNestedValue(jsonMap map[string]interface{}, key string) (interface{}, er
 			}
 		} else {
 			// Part not found
-			return nil, errors.New("key not found in the map")
+			// return nil, errors.New("key not found in the map")
+			return key, nil
 		}
 	}
 
