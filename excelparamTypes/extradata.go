@@ -19,6 +19,7 @@ type E0001Data struct {
 	InputExcelPath string
 	InputSheet     string
 	OutputSheet    string
+	ImagePath      string
 }
 
 func (m *E0001Data) ParseData(datamap map[string]interface{}) {
