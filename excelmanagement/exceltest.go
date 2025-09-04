@@ -392,3 +392,206 @@ func ExcelProcessor(serviceName string, requestMap map[string]interface{}, e0001
 
 	return formatted_outputmap, false, nil
 }
+
+func ExcelProcessorMacro(serviceName string, requestMap map[string]interface{}, e0001data excelparamTypes.E0001Data, e0002data excelparamTypes.E0002Data, pdfpath string) (string, bool, error) {
+	outputfieldDataMap := make(map[string]excelparamTypes.E0002)
+	errorfieldDataMap := make(map[string]excelparamTypes.E0002)
+	outputFields := make([]interface{}, 0)
+	inputMap := make(map[string]interface{})
+
+	for _, field := range e0002data.FieldArray {
+		fmt.Println(field.Mandatory, "**********************")
+		if field.FieldMode == exceltypes.Input {
+			// val, ok := requestMap[field.JsonName]
+			val, err := GetNestedValue(requestMap, field.JsonName)
+			// If the key does not exist error
+			if err != nil {
+				if field.Mandatory {
+					return "", false, err
+				}
+				// If the key exist proceed
+			} else {
+
+				switch field.FieldType {
+				case exceltypes.Single:
+					inputMap[field.ExcelName] = []interface{}{[]interface{}{val}}
+				case exceltypes.OneDArray:
+					if field.Orientation == exceltypes.Horizontal {
+						inputMap[field.ExcelName] = []interface{}{val.([]interface{})}
+					} else {
+						array := val.([]interface{})
+						interfaceSlice := make([]interface{}, len(array))
+
+						// Fill the interface slice
+						for i, v := range array {
+							interfaceSlice[i] = []interface{}{v}
+						}
+						inputMap[field.ExcelName] = interfaceSlice
+					}
+
+				case exceltypes.TwoDArray:
+					if field.Orientation == exceltypes.Horizontal {
+						inputMap[field.ExcelName] = val
+
+					} else {
+
+						inputMap[field.ExcelName] = Transpose(val.([]interface{}))
+					}
+				case exceltypes.OneDMap:
+					var outerkeys []string
+
+					// Unmarshal JSON string to a slice of strings
+					err := json.Unmarshal([]byte(field.OuterKeys), &outerkeys)
+					if err != nil {
+						fmt.Println("Error:Unable parse the map keys: ", err)
+					}
+
+					valMap := val.(map[string]interface{})
+					valArray := make([]interface{}, 0)
+					for _, mapkey := range outerkeys {
+
+						if mapvalue, exists := valMap[mapkey]; exists {
+							valArray = append(valArray, mapvalue)
+						} else {
+							valArray = append(valArray, nil)
+						}
+					}
+					if field.Orientation == exceltypes.Horizontal {
+
+						inputMap[field.ExcelName] = []interface{}{valArray}
+					} else {
+						interfaceSlice := make([]interface{}, len(valArray))
+
+						for i, v := range valArray {
+							interfaceSlice[i] = []interface{}{v}
+						}
+						inputMap[field.ExcelName] = interfaceSlice
+
+					}
+
+				case exceltypes.TwoDMap:
+					var outerkeys []string
+					var innerkeys []string
+
+					// Unmarshal JSON string to a slice of strings
+					err := json.Unmarshal([]byte(field.OuterKeys), &outerkeys)
+					if err != nil {
+						fmt.Println("Error:Unable parse the map outer keys: ", err)
+					}
+
+					err = json.Unmarshal([]byte(field.InnerKeys), &innerkeys)
+					if err != nil {
+						fmt.Println("Error:Unable parse the map inner keys: ", err)
+					}
+
+					valMap := val.(map[string]interface{})
+					valArray := make([]interface{}, 0)
+
+					for _, mapkey1 := range outerkeys {
+
+						if mapvalue1, exists := valMap[mapkey1]; exists {
+							valArray1 := make([]interface{}, 0)
+							for _, mapkey2 := range innerkeys {
+
+								mapvalue2 := mapvalue1.(map[string]interface{})
+
+								if mapvalue, exists := mapvalue2[mapkey2]; exists {
+
+									valArray1 = append(valArray1, mapvalue)
+
+								} else {
+
+									valArray1 = append(valArray1, nil)
+
+								}
+							}
+
+							valArray = append(valArray, valArray1)
+						} else {
+							valArray = append(valArray, nil)
+						}
+					}
+					if field.Orientation == exceltypes.Horizontal {
+
+						inputMap[field.ExcelName] = valArray
+					} else {
+
+						inputMap[field.ExcelName] = Transpose(valArray)
+
+					}
+
+				case exceltypes.TwoDArrayMap:
+					var innerkeys []string
+
+					// Unmarshal JSON string to a slice of strings
+
+					err := json.Unmarshal([]byte(field.InnerKeys), &innerkeys)
+					if err != nil {
+						fmt.Println("Error:Unable parse the map inner keys: ", err)
+					}
+
+					valArray := val.([]interface{})
+					opArray := make([]interface{}, 0)
+
+					for _, value := range valArray {
+
+						opArray1 := make([]interface{}, 0)
+						for _, mapkey := range innerkeys {
+
+							value2 := value.(map[string]interface{})
+
+							if value3, exists := value2[mapkey]; exists {
+
+								opArray1 = append(opArray1, value3)
+
+							} else {
+
+								opArray1 = append(opArray1, nil)
+
+							}
+						}
+
+						opArray = append(opArray, opArray1)
+
+					}
+					if field.Orientation == exceltypes.Horizontal {
+
+						inputMap[field.ExcelName] = opArray
+					} else {
+
+						inputMap[field.ExcelName] = Transpose(opArray)
+
+					}
+
+				default:
+					iErrDesc := "unknown data type for input json field " + field.JsonName
+					return "", false, errors.New(iErrDesc)
+				}
+
+			}
+		} else {
+
+			if field.FieldMode == exceltypes.Error {
+				errorfieldDataMap[field.ExcelName] = field
+			} else {
+				outputfieldDataMap[field.ExcelName] = field
+			}
+			outputFields = append(outputFields, field.ExcelName)
+
+		}
+	}
+
+	excelmanager, err := NewExcelManager(e0001data.ExcelPath)
+	if err != nil {
+		return "", false, err
+	}
+
+	defer excelmanager.Close()
+
+	response, err := excelmanager.NamedRangeSetAndMacro(inputMap, "ExportSheetToPDF", pdfpath)
+	if err != nil {
+		return "", false, err
+	}
+
+	return response, false, nil
+}
