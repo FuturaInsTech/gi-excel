@@ -1,6 +1,7 @@
 package excelmanagement
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"runtime"
@@ -369,54 +370,28 @@ func (m *ExcelManager) NamedRangeSetAndGet1(inputkeys []string, inputvalues [][]
 
 }
 
-func (m *ExcelManager) NamedRangeSetAndMacro(input map[string]interface{}, macroname string, pdfoutput string) (string, error) {
+func (m *ExcelManager) NamedRangeSetAndMacro(input map[string]interface{}, macroname1 string, macroname string, pdfoutput string) (string, error) {
 	//process input
-	for key, value := range input {
-		namedRange := oleutil.MustCallMethod(m.names, "Item", key).ToIDispatch()
-		rangeObj := oleutil.MustGetProperty(namedRange, "RefersToRange").ToIDispatch()
-		// Get number of rows and columns in the named range
-		rows := oleutil.MustGetProperty(rangeObj, "Rows").ToIDispatch()
-		columns := oleutil.MustGetProperty(rangeObj, "Columns").ToIDispatch()
-		rowCount := int(oleutil.MustGetProperty(rows, "Count").Val)       // Get number of rows
-		columnCount := int(oleutil.MustGetProperty(columns, "Count").Val) // Get number of columns
-		input2dArray := make([][]interface{}, 0)
-		for _, val := range value.([]interface{}) {
-
-			input2dArray = append(input2dArray, val.([]interface{}))
-
-		}
-		inputRowCount := len(input2dArray)
-		inputColCount := len(input2dArray[0])
-		if inputRowCount > rowCount || inputColCount > columnCount {
-			return "", errors.New("input size mismatch with named range for " + key)
-		}
-
-		for i := 1; i <= inputRowCount; i++ {
-			//skip some elements if no value provided
-			if input2dArray[i-1] == nil {
-				continue
-			}
-			for j := 1; j <= inputColCount; j++ {
-				//skip some elements if no value provided
-				if input2dArray[i-1][j-1] == nil {
-					continue
-				}
-				cell := oleutil.MustGetProperty(rangeObj, "Cells", i, j).ToIDispatch()
-				oleutil.MustPutProperty(cell, "Value", input2dArray[i-1][j-1])
-				cell.Release()
-			}
-		}
-		rows.Release()
-		columns.Release()
-		namedRange.Release()
-		rangeObj.Release()
+	fmt.Println("************************starting inputs:")
+	// Convert map to JSON string
+	jsonBytes, err := json.Marshal(input)
+	if err != nil {
+		panic(err)
 	}
+	jsonString := string(jsonBytes)
 
+	macroFullName1 := fmt.Sprintf("'%s'!%s", oleutil.MustGetProperty(m.workbook, "Name").ToString(), macroname1)
 	macroFullName := fmt.Sprintf("'%s'!%s", oleutil.MustGetProperty(m.workbook, "Name").ToString(), macroname)
-	_, err := oleutil.CallMethod(m.excelApp, "Run", macroFullName, pdfoutput)
+	fmt.Println("************************Running macro:", macroFullName1)
+	_, err = oleutil.CallMethod(m.excelApp, "Run", macroFullName1, jsonString)
+	if err != nil {
+		return "", fmt.Errorf("failed to run macro '%s': %v", macroname1, err)
+	}
+	fmt.Println("************************Running macro:", macroFullName)
+	_, err = oleutil.CallMethod(m.excelApp, "Run", macroFullName, pdfoutput)
 	if err != nil {
 		return "", fmt.Errorf("failed to run macro '%s': %v", macroname, err)
 	}
-
+	fmt.Println("************************Running macro Ended:", macroFullName)
 	return pdfoutput, nil
 }
