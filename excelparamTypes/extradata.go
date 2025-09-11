@@ -21,6 +21,8 @@ type E0001Data struct {
 	OutputSheet    string
 	ImagePath      string
 	PdfPath        string
+	MacroName1     string
+	MacroName2     string
 }
 
 func (m *E0001Data) ParseData(datamap map[string]interface{}) {
