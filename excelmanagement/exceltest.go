@@ -224,7 +224,7 @@ func ExcelProcessor(parentCtx context.Context, client proto.SpreadsheetServiceCl
 			fmt.Println("ERROR:", err)
 			return nil, false, err
 		}
-
+		req.DocLocation = e0001data.ExcelPath
 		resp, err := client.Compute(ctx, req)
 		if err != nil {
 			return nil, false, err
