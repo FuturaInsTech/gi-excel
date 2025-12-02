@@ -7,11 +7,12 @@
 package proto
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -193,6 +194,7 @@ type ComputeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Inputs        []*Field               `protobuf:"bytes,1,rep,name=inputs,proto3" json:"inputs,omitempty"`
 	Outputs       []string               `protobuf:"bytes,2,rep,name=outputs,proto3" json:"outputs,omitempty"`
+	DocLocation   string                 `protobuf:"bytes,3,opt,name=doc_location,json=docLocation,proto3" json:"doc_location,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -239,6 +241,13 @@ func (x *ComputeRequest) GetOutputs() []string {
 		return x.Outputs
 	}
 	return nil
+}
+
+func (x *ComputeRequest) GetDocLocation() string {
+	if x != nil {
+		return x.DocLocation
+	}
+	return ""
 }
 
 type ComputeResponse struct {
@@ -300,10 +309,11 @@ const file_proto_compute_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12/\n" +
 	"\x06values\x18\x02 \x03(\v2\x17.spreadsheet.FieldValueR\x06values\x12\x12\n" +
 	"\x04rows\x18\x03 \x01(\x05R\x04rows\x12\x12\n" +
-	"\x04cols\x18\x04 \x01(\x05R\x04cols\"V\n" +
+	"\x04cols\x18\x04 \x01(\x05R\x04cols\"y\n" +
 	"\x0eComputeRequest\x12*\n" +
 	"\x06inputs\x18\x01 \x03(\v2\x12.spreadsheet.FieldR\x06inputs\x12\x18\n" +
-	"\aoutputs\x18\x02 \x03(\tR\aoutputs\"?\n" +
+	"\aoutputs\x18\x02 \x03(\tR\aoutputs\x12!\n" +
+	"\fdoc_location\x18\x03 \x01(\tR\vdocLocation\"?\n" +
 	"\x0fComputeResponse\x12,\n" +
 	"\aoutputs\x18\x01 \x03(\v2\x12.spreadsheet.FieldR\aoutputs2Z\n" +
 	"\x12SpreadsheetService\x12D\n" +
