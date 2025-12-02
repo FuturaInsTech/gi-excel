@@ -1,15 +1,18 @@
 package excelmanagement
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/FuturaInsTech/gi-excel/excelparamTypes"
 	"github.com/FuturaInsTech/gi-excel/exceltypes"
+	"github.com/FuturaInsTech/gi-excel/proto"
 )
 
-func ExcelProcessor(serviceName string, requestMap map[string]interface{}, e0001data excelparamTypes.E0001Data, e0002data excelparamTypes.E0002Data) (map[string]interface{}, bool, error) {
+func ExcelProcessor(parentCtx context.Context, client proto.SpreadsheetServiceClient, serviceName string, requestMap map[string]interface{}, e0001data excelparamTypes.E0001Data, e0002data excelparamTypes.E0002Data) (map[string]interface{}, bool, error) {
 	outputfieldDataMap := make(map[string]excelparamTypes.E0002)
 	errorfieldDataMap := make(map[string]excelparamTypes.E0002)
 	outputFields := make([]interface{}, 0)
@@ -196,19 +199,43 @@ func ExcelProcessor(serviceName string, requestMap map[string]interface{}, e0001
 
 		}
 	}
+	var outputMap map[string]interface{}
+	if client == nil {
+		excelmanager, err := NewExcelManager(e0001data.ExcelPath)
+		if err != nil {
+			return nil, false, err
+		}
 
-	excelmanager, err := NewExcelManager(e0001data.ExcelPath)
-	if err != nil {
-		return nil, false, err
+		defer excelmanager.Close()
+
+		outputMap, err = excelmanager.NamedRangeSetAndGet(inputMap, outputFields)
+		if err != nil {
+			return nil, false, err
+		}
+	} else {
+		ctx, cancel := context.WithTimeout(parentCtx, 3*time.Second)
+		defer cancel()
+		outFieldsStr := make([]string, len(outputFields))
+		for i, v := range outputFields {
+			outFieldsStr[i] = v.(string) // will panic if any element is not a string
+		}
+		req, err := BuildComputeRequest(inputMap, outFieldsStr)
+		if err != nil {
+			fmt.Println("ERROR:", err)
+			return nil, false, err
+		}
+
+		resp, err := client.Compute(ctx, req)
+		if err != nil {
+			return nil, false, err
+		}
+
+		outputMap, err = BuildOutputMap(resp)
+		if err != nil {
+			return nil, false, err
+		}
+
 	}
-
-	defer excelmanager.Close()
-
-	outputMap, err := excelmanager.NamedRangeSetAndGet(inputMap, outputFields)
-	if err != nil {
-		return nil, false, err
-	}
-
 	formatted_errormap := make(map[string]interface{})
 
 	errexists := false
@@ -353,7 +380,7 @@ func ExcelProcessor(serviceName string, requestMap map[string]interface{}, e0001
 
 			// Unmarshal JSON string to a slice of strings
 
-			err = json.Unmarshal([]byte(field.InnerKeys), &innerkeys)
+			err := json.Unmarshal([]byte(field.InnerKeys), &innerkeys)
 			if err != nil {
 				fmt.Println("Error:Unable parse the map inner keys: ", err)
 			}
@@ -432,4 +459,147 @@ func ExcelProcessorMacro(serviceName string, requestMap map[string]interface{}, 
 	}
 
 	return response, false, nil
+}
+
+func BuildComputeRequest(inputMap map[string]interface{}, outputNames []string) (*proto.ComputeRequest, error) {
+
+	var fields []*proto.Field
+
+	for fieldName, raw := range inputMap {
+
+		// Expecting: [][]interface{}
+		rowsArr, ok := raw.([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("field %s must be [][]interface{}", fieldName)
+		}
+
+		rows := len(rowsArr)
+		if rows == 0 {
+			continue
+		}
+
+		colsArr, ok := rowsArr[0].([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("field %s row must be []interface{}", fieldName)
+		}
+
+		cols := len(colsArr)
+		if cols == 0 {
+			continue
+		}
+
+		// Flatten into []FieldValue
+		var flatValues []*proto.FieldValue
+
+		for _, r := range rowsArr {
+			rowSlice, ok := r.([]interface{})
+			if !ok {
+				return nil, fmt.Errorf("field %s row is not []interface{}", fieldName)
+			}
+
+			for _, cell := range rowSlice {
+				fv, err := convertToFieldValue(cell)
+				if err != nil {
+					return nil, fmt.Errorf("field %s conversion error: %v", fieldName, err)
+				}
+				flatValues = append(flatValues, fv)
+			}
+		}
+
+		fields = append(fields, &proto.Field{
+			Name:   fieldName,
+			Values: flatValues,
+			Rows:   int32(rows),
+			Cols:   int32(cols),
+		})
+	}
+
+	return &proto.ComputeRequest{
+		Inputs:  fields,
+		Outputs: outputNames,
+	}, nil
+}
+
+func convertToFieldValue(v interface{}) (*proto.FieldValue, error) {
+
+	switch val := v.(type) {
+
+	case float64:
+		return &proto.FieldValue{Kind: &proto.FieldValue_Num{Num: val}}, nil
+
+	case float32:
+		return &proto.FieldValue{Kind: &proto.FieldValue_Num{Num: float64(val)}}, nil
+
+	case int:
+		return &proto.FieldValue{Kind: &proto.FieldValue_Num{Num: float64(val)}}, nil
+
+	case int64:
+		return &proto.FieldValue{Kind: &proto.FieldValue_Num{Num: float64(val)}}, nil
+
+	case json.Number:
+		f, _ := val.Float64()
+		return &proto.FieldValue{Kind: &proto.FieldValue_Num{Num: f}}, nil
+
+	case string:
+		return &proto.FieldValue{Kind: &proto.FieldValue_Text{Text: val}}, nil
+
+	case nil:
+		return &proto.FieldValue{Kind: &proto.FieldValue_Text{Text: ""}}, nil
+
+	default:
+		return nil, fmt.Errorf("unsupported type %T", v)
+	}
+}
+
+func BuildOutputMap(resp *proto.ComputeResponse) (map[string]interface{}, error) {
+	outputMap := make(map[string]interface{})
+
+	for _, field := range resp.Outputs {
+
+		rows := int(field.Rows)
+		cols := int(field.Cols)
+
+		if rows*cols != len(field.Values) {
+			return nil, fmt.Errorf(
+				"field %s: rows*cols does not match values length",
+				field.Name,
+			)
+		}
+
+		// Recreate 2D structure [][]interface{}
+		matrix := make([][]interface{}, rows)
+		for r := 0; r < rows; r++ {
+			matrix[r] = make([]interface{}, cols)
+		}
+
+		// Fill row-major order
+		idx := 0
+		for r := 0; r < rows; r++ {
+			for c := 0; c < cols; c++ {
+				matrix[r][c] = convertFromFieldValue(field.Values[idx])
+				idx++
+			}
+		}
+
+		outputMap[field.Name] = matrix
+	}
+
+	return outputMap, nil
+}
+
+func convertFromFieldValue(fv *proto.FieldValue) interface{} {
+	switch v := fv.Kind.(type) {
+
+	case *proto.FieldValue_Num:
+		return v.Num
+
+	case *proto.FieldValue_Text:
+		return v.Text
+
+	case *proto.FieldValue_Date:
+		return v.Date
+
+	default:
+		return nil
+	}
 }
