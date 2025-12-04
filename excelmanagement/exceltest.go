@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/FuturaInsTech/gi-excel/excelparamTypes"
@@ -213,7 +215,12 @@ func ExcelProcessor(parentCtx context.Context, client proto.SpreadsheetServiceCl
 			return nil, false, err
 		}
 	} else {
-		ctx, cancel := context.WithTimeout(parentCtx, 3*time.Second)
+		timeoutStr := os.Getenv("GRPC_TIMEOUT_SECONDS")
+		timeoutSec, err := strconv.Atoi(timeoutStr)
+		if err != nil {
+			timeoutSec = 3 // default
+		}
+		ctx, cancel := context.WithTimeout(parentCtx, time.Duration(timeoutSec)*time.Second)
 		defer cancel()
 		outFieldsStr := make([]string, len(outputFields))
 		for i, v := range outputFields {
