@@ -290,6 +290,13 @@ func ExcelProcessor(parentCtx context.Context, client proto.SpreadsheetServiceCl
 	formatted_outputmap := make(map[string]interface{})
 	for key, field := range outputfieldDataMap {
 
+		_, ok := outputMap[key]
+		if !ok {
+			fmt.Printf("Error:output named range %q don't exist in spreadsheet: ", key)
+
+			return nil, false, errors.New("Error:output named range don't exist in spreadsheet: " + key)
+		}
+
 		switch field.FieldType {
 		case exceltypes.Single:
 			// formatted_outputmap[field.JsonName] = outputMap[key].([][]interface{})[0][0]
