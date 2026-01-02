@@ -14,7 +14,7 @@ import (
 	"github.com/FuturaInsTech/gi-excel/proto"
 )
 
-func ExcelProcessor(parentCtx context.Context, client proto.SpreadsheetServiceClient, serviceName string, requestMap map[string]interface{}, e0001data excelparamTypes.E0001Data, e0002data excelparamTypes.E0002Data) (map[string]interface{}, bool, error) {
+func ExcelProcessor(parentCtx context.Context, client proto.SpreadsheetServiceClient, tenantid string, serviceName string, requestMap map[string]interface{}, e0001data excelparamTypes.E0001Data, e0002data excelparamTypes.E0002Data) (map[string]interface{}, bool, error) {
 	outputfieldDataMap := make(map[string]excelparamTypes.E0002)
 	errorfieldDataMap := make(map[string]excelparamTypes.E0002)
 	outputFields := make([]interface{}, 0)
@@ -231,7 +231,7 @@ func ExcelProcessor(parentCtx context.Context, client proto.SpreadsheetServiceCl
 			fmt.Println("ERROR:", err)
 			return nil, false, err
 		}
-		req.DocLocation = e0001data.ExcelPath
+		req.DocLocation = tenantid + "/" + e0001data.ExcelPath
 		resp, err := client.Compute(ctx, req)
 		if err != nil {
 			return nil, false, err
