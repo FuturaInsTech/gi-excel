@@ -380,8 +380,16 @@ func (m *ExcelManager) NamedRangeSetAndMacro(input map[string]interface{}, macro
 	}
 	jsonString := string(jsonBytes)
 
-	macroFullName1 := fmt.Sprintf("'%s'!%s", oleutil.MustGetProperty(m.workbook, "Name").ToString(), macroname1)
-	macroFullName := fmt.Sprintf("'%s'!%s", oleutil.MustGetProperty(m.workbook, "Name").ToString(), macroname)
+	//macroFullName1 := fmt.Sprintf("'%s'!%s", oleutil.MustGetProperty(m.workbook, "Name").ToString(), macroname1)
+	//macroFullName := fmt.Sprintf("'%s'!%s", oleutil.MustGetProperty(m.workbook, "Name").ToString(), macroname)
+	//
+	nameVariant := oleutil.MustGetProperty(m.workbook, "Name")
+	workbookName := nameVariant.ToString()
+	nameVariant.Clear() // VERY IMPORTANT
+
+	macroFullName1 := fmt.Sprintf("'%s'!%s", workbookName, macroname1)
+	macroFullName := fmt.Sprintf("'%s'!%s", workbookName, macroname)
+
 	fmt.Println("************************Running macro:", macroFullName1)
 	_, err = oleutil.CallMethod(m.excelApp, "Run", macroFullName1, jsonString)
 	if err != nil {
