@@ -255,32 +255,48 @@ func ExcelProcessor(parentCtx context.Context, client proto.SpreadsheetServiceCl
 			fmt.Println("Error:Unable parse the map keys: ", err)
 		}
 
-		outputvalMap := make(map[string]interface{})
+		var outputvalMaps []map[string]interface{}
 
 		if field.Orientation == exceltypes.Horizontal {
-			errValues := outputMap[key].([][]interface{})[0]
+			errrows := outputMap[key].([][]interface{})
 
-			for i, val := range outerkeys {
-				outputvalMap[val] = errValues[i]
-			}
-			if errValues[2] == "Y" {
-				errexists = true
+			for _, errValues := range errrows {
+
+				if len(errValues) > 2 && errValues[2] == "Y" {
+					rowMap := make(map[string]interface{})
+
+					for i, val := range outerkeys {
+						rowMap[val] = errValues[i]
+					}
+					outputvalMaps = append(outputvalMaps, rowMap)
+					errexists = true
+				}
 			}
 
 		} else {
-			errValues := outputMap[key].([][]interface{})
+			errcols := outputMap[key].([][]interface{})
 
-			for i, val := range outerkeys {
-				outputvalMap[val] = errValues[i][0]
+			// Each column is a record, so iterate by index
+			for i := 0; i < len(errcols[0]); i++ {
+				// Build one record from column i
+				record := make([]interface{}, len(errcols))
+				for j := 0; j < len(errcols); j++ {
+					record[j] = errcols[j][i]
+				}
+
+				// Only append if error exists
+				if len(record) > 2 && record[2] == "Y" {
+					rowMap := make(map[string]interface{})
+					for k, val := range outerkeys {
+						rowMap[val] = record[k]
+					}
+					outputvalMaps = append(outputvalMaps, rowMap)
+					errexists = true
+				}
 			}
-
-			if errValues[2][0] == "Y" {
-				errexists = true
-			}
-
 		}
 		// formatted_outputmap[field.JsonName] = outputvalMap
-		AddNestedValue(formatted_errormap, field.JsonName, outputvalMap)
+		AddNestedValue(formatted_errormap, field.JsonName, outputvalMaps)
 	}
 
 	if errexists {
