@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.0
 // - protoc             v4.22.4
-// source: proto/compute.proto
+// source: compute.proto
 
 package proto
 
@@ -20,7 +20,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SpreadsheetService_Compute_FullMethodName = "/spreadsheet.SpreadsheetService/Compute"
+	SpreadsheetService_Compute_FullMethodName       = "/spreadsheet.SpreadsheetService/Compute"
+	SpreadsheetService_ExecuteMacros_FullMethodName = "/spreadsheet.SpreadsheetService/ExecuteMacros"
 )
 
 // SpreadsheetServiceClient is the client API for SpreadsheetService service.
@@ -28,6 +29,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SpreadsheetServiceClient interface {
 	Compute(ctx context.Context, in *ComputeRequest, opts ...grpc.CallOption) (*ComputeResponse, error)
+	// NEW RPC
+	ExecuteMacros(ctx context.Context, in *ExecuteMacrosRequest, opts ...grpc.CallOption) (*ExecuteMacrosResponse, error)
 }
 
 type spreadsheetServiceClient struct {
@@ -48,11 +51,23 @@ func (c *spreadsheetServiceClient) Compute(ctx context.Context, in *ComputeReque
 	return out, nil
 }
 
+func (c *spreadsheetServiceClient) ExecuteMacros(ctx context.Context, in *ExecuteMacrosRequest, opts ...grpc.CallOption) (*ExecuteMacrosResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ExecuteMacrosResponse)
+	err := c.cc.Invoke(ctx, SpreadsheetService_ExecuteMacros_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SpreadsheetServiceServer is the server API for SpreadsheetService service.
 // All implementations must embed UnimplementedSpreadsheetServiceServer
 // for forward compatibility.
 type SpreadsheetServiceServer interface {
 	Compute(context.Context, *ComputeRequest) (*ComputeResponse, error)
+	// NEW RPC
+	ExecuteMacros(context.Context, *ExecuteMacrosRequest) (*ExecuteMacrosResponse, error)
 	mustEmbedUnimplementedSpreadsheetServiceServer()
 }
 
@@ -65,6 +80,9 @@ type UnimplementedSpreadsheetServiceServer struct{}
 
 func (UnimplementedSpreadsheetServiceServer) Compute(context.Context, *ComputeRequest) (*ComputeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Compute not implemented")
+}
+func (UnimplementedSpreadsheetServiceServer) ExecuteMacros(context.Context, *ExecuteMacrosRequest) (*ExecuteMacrosResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ExecuteMacros not implemented")
 }
 func (UnimplementedSpreadsheetServiceServer) mustEmbedUnimplementedSpreadsheetServiceServer() {}
 func (UnimplementedSpreadsheetServiceServer) testEmbeddedByValue()                            {}
@@ -105,6 +123,24 @@ func _SpreadsheetService_Compute_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SpreadsheetService_ExecuteMacros_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExecuteMacrosRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SpreadsheetServiceServer).ExecuteMacros(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SpreadsheetService_ExecuteMacros_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SpreadsheetServiceServer).ExecuteMacros(ctx, req.(*ExecuteMacrosRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SpreadsheetService_ServiceDesc is the grpc.ServiceDesc for SpreadsheetService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -115,6 +151,10 @@ var SpreadsheetService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Compute",
 			Handler:    _SpreadsheetService_Compute_Handler,
+		},
+		{
+			MethodName: "ExecuteMacros",
+			Handler:    _SpreadsheetService_ExecuteMacros_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -450,14 +450,7 @@ func ExcelProcessor(parentCtx context.Context, client proto.SpreadsheetServiceCl
 	return formatted_outputmap, false, nil
 }
 
-func ExcelProcessorMacro(serviceName string, requestMap map[string]interface{}, e0001data excelparamTypes.E0001Data, e0002data excelparamTypes.E0002Data, pdfpath string) (string, bool, error) {
-
-	excelmanager, err := NewExcelManager(e0001data.ExcelPath)
-	if err != nil {
-		return "", false, err
-	}
-
-	defer excelmanager.Close()
+func ExcelProcessorMacro(parentCtx context.Context, client proto.SpreadsheetServiceClient, tenantid string, serviceName string, requestMap map[string]interface{}, e0001data excelparamTypes.E0001Data, e0002data excelparamTypes.E0002Data, pdfpath string) (string, bool, error) {
 
 	jsonNames := make([]string, len(e0002data.FieldArray))
 
@@ -482,13 +475,66 @@ func ExcelProcessorMacro(serviceName string, requestMap map[string]interface{}, 
 	// Print as JSON
 	jsonBytes1, _ := json.MarshalIndent(result, "", "  ")
 	fmt.Println(string(jsonBytes1))
+	//
 
-	response, err := excelmanager.NamedRangeSetAndMacro(result, e0001data.MacroName1, e0001data.MacroName2, pdfpath)
-	if err != nil {
-		return "", false, err
+	if client == nil {
+		excelmanager, err := NewExcelManager(e0001data.ExcelPath)
+		if err != nil {
+			return "", false, err
+		}
+
+		defer excelmanager.Close()
+		response, err := excelmanager.NamedRangeSetAndMacro(result, e0001data.MacroName1, e0001data.MacroName2, pdfpath)
+
+		if err != nil {
+			return "", false, err
+		}
+
+		return response, false, nil
+
+	} else {
+
+		jsonBytes, err := json.Marshal(result)
+		if err != nil {
+			return "", false, fmt.Errorf("parsing request json string failed: %w", err)
+		}
+		jsonString := string(jsonBytes)
+		docPath := tenantid + "/" + e0001data.ExcelPath
+		req := &proto.ExecuteMacrosRequest{
+			DocLocation: docPath, // e.g. "C:\\file.ods"
+
+			Macro1Name: e0001data.MacroName1,
+			Macro1Json: jsonString, // your JSON input
+
+			Macro2Name:    e0001data.MacroName2,
+			Macro2PdfPath: pdfpath, // e.g. "C:\\out.pdf"
+		}
+		timeoutStr := os.Getenv("GRPC_TIMEOUT_SECONDS")
+		timeoutSec, err := strconv.Atoi(timeoutStr)
+		if err != nil {
+			timeoutSec = 3 // default
+		}
+		ctx, cancel := context.WithTimeout(parentCtx, time.Duration(timeoutSec)*time.Second)
+		defer cancel()
+
+		resp, err := client.ExecuteMacros(ctx, req)
+		if err != nil {
+			return "", false, fmt.Errorf("gRPC ExecuteMacros failed: %w", err)
+		}
+
+		// validate business response
+		if resp == nil {
+			return "", false, fmt.Errorf("ExecuteMacros returned nil response")
+		}
+
+		if !resp.Success {
+			return "", false, fmt.Errorf("macro execution failed: %s", resp.Message)
+		}
+
+		return pdfpath, false, nil
+
 	}
 
-	return response, false, nil
 }
 
 func BuildComputeRequest(inputMap map[string]interface{}, outputNames []string) (*proto.ComputeRequest, error) {

@@ -2,17 +2,16 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v4.22.4
-// source: proto/compute.proto
+// source: compute.proto
 
 package proto
 
 import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
-
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -37,7 +36,7 @@ type FieldValue struct {
 
 func (x *FieldValue) Reset() {
 	*x = FieldValue{}
-	mi := &file_proto_compute_proto_msgTypes[0]
+	mi := &file_compute_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -49,7 +48,7 @@ func (x *FieldValue) String() string {
 func (*FieldValue) ProtoMessage() {}
 
 func (x *FieldValue) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_compute_proto_msgTypes[0]
+	mi := &file_compute_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -62,7 +61,7 @@ func (x *FieldValue) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FieldValue.ProtoReflect.Descriptor instead.
 func (*FieldValue) Descriptor() ([]byte, []int) {
-	return file_proto_compute_proto_rawDescGZIP(), []int{0}
+	return file_compute_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *FieldValue) GetKind() isFieldValue_Kind {
@@ -134,7 +133,7 @@ type Field struct {
 
 func (x *Field) Reset() {
 	*x = Field{}
-	mi := &file_proto_compute_proto_msgTypes[1]
+	mi := &file_compute_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -146,7 +145,7 @@ func (x *Field) String() string {
 func (*Field) ProtoMessage() {}
 
 func (x *Field) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_compute_proto_msgTypes[1]
+	mi := &file_compute_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -159,7 +158,7 @@ func (x *Field) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Field.ProtoReflect.Descriptor instead.
 func (*Field) Descriptor() ([]byte, []int) {
-	return file_proto_compute_proto_rawDescGZIP(), []int{1}
+	return file_compute_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Field) GetName() string {
@@ -201,7 +200,7 @@ type ComputeRequest struct {
 
 func (x *ComputeRequest) Reset() {
 	*x = ComputeRequest{}
-	mi := &file_proto_compute_proto_msgTypes[2]
+	mi := &file_compute_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -213,7 +212,7 @@ func (x *ComputeRequest) String() string {
 func (*ComputeRequest) ProtoMessage() {}
 
 func (x *ComputeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_compute_proto_msgTypes[2]
+	mi := &file_compute_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -226,7 +225,7 @@ func (x *ComputeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ComputeRequest.ProtoReflect.Descriptor instead.
 func (*ComputeRequest) Descriptor() ([]byte, []int) {
-	return file_proto_compute_proto_rawDescGZIP(), []int{2}
+	return file_compute_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ComputeRequest) GetInputs() []*Field {
@@ -259,7 +258,7 @@ type ComputeResponse struct {
 
 func (x *ComputeResponse) Reset() {
 	*x = ComputeResponse{}
-	mi := &file_proto_compute_proto_msgTypes[3]
+	mi := &file_compute_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -271,7 +270,7 @@ func (x *ComputeResponse) String() string {
 func (*ComputeResponse) ProtoMessage() {}
 
 func (x *ComputeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_compute_proto_msgTypes[3]
+	mi := &file_compute_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -284,7 +283,7 @@ func (x *ComputeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ComputeResponse.ProtoReflect.Descriptor instead.
 func (*ComputeResponse) Descriptor() ([]byte, []int) {
-	return file_proto_compute_proto_rawDescGZIP(), []int{3}
+	return file_compute_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ComputeResponse) GetOutputs() []*Field {
@@ -294,11 +293,139 @@ func (x *ComputeResponse) GetOutputs() []*Field {
 	return nil
 }
 
-var File_proto_compute_proto protoreflect.FileDescriptor
+type ExecuteMacrosRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DocLocation   string                 `protobuf:"bytes,1,opt,name=doc_location,json=docLocation,proto3" json:"doc_location,omitempty"`         // path to .ods file
+	Macro1Name    string                 `protobuf:"bytes,2,opt,name=macro1_name,json=macro1Name,proto3" json:"macro1_name,omitempty"`            // e.g. PopulateInputsFromJSON
+	Macro1Json    string                 `protobuf:"bytes,3,opt,name=macro1_json,json=macro1Json,proto3" json:"macro1_json,omitempty"`            // JSON string input
+	Macro2Name    string                 `protobuf:"bytes,4,opt,name=macro2_name,json=macro2Name,proto3" json:"macro2_name,omitempty"`            // e.g. ExportOutputSheetToPDF
+	Macro2PdfPath string                 `protobuf:"bytes,5,opt,name=macro2_pdf_path,json=macro2PdfPath,proto3" json:"macro2_pdf_path,omitempty"` // full PDF output path
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
 
-const file_proto_compute_proto_rawDesc = "" +
+func (x *ExecuteMacrosRequest) Reset() {
+	*x = ExecuteMacrosRequest{}
+	mi := &file_compute_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExecuteMacrosRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExecuteMacrosRequest) ProtoMessage() {}
+
+func (x *ExecuteMacrosRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_compute_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExecuteMacrosRequest.ProtoReflect.Descriptor instead.
+func (*ExecuteMacrosRequest) Descriptor() ([]byte, []int) {
+	return file_compute_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ExecuteMacrosRequest) GetDocLocation() string {
+	if x != nil {
+		return x.DocLocation
+	}
+	return ""
+}
+
+func (x *ExecuteMacrosRequest) GetMacro1Name() string {
+	if x != nil {
+		return x.Macro1Name
+	}
+	return ""
+}
+
+func (x *ExecuteMacrosRequest) GetMacro1Json() string {
+	if x != nil {
+		return x.Macro1Json
+	}
+	return ""
+}
+
+func (x *ExecuteMacrosRequest) GetMacro2Name() string {
+	if x != nil {
+		return x.Macro2Name
+	}
+	return ""
+}
+
+func (x *ExecuteMacrosRequest) GetMacro2PdfPath() string {
+	if x != nil {
+		return x.Macro2PdfPath
+	}
+	return ""
+}
+
+type ExecuteMacrosResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"` // error or success info
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExecuteMacrosResponse) Reset() {
+	*x = ExecuteMacrosResponse{}
+	mi := &file_compute_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExecuteMacrosResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExecuteMacrosResponse) ProtoMessage() {}
+
+func (x *ExecuteMacrosResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_compute_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExecuteMacrosResponse.ProtoReflect.Descriptor instead.
+func (*ExecuteMacrosResponse) Descriptor() ([]byte, []int) {
+	return file_compute_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ExecuteMacrosResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ExecuteMacrosResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+var File_compute_proto protoreflect.FileDescriptor
+
+const file_compute_proto_rawDesc = "" +
 	"\n" +
-	"\x13proto/compute.proto\x12\vspreadsheet\"T\n" +
+	"\rcompute.proto\x12\vspreadsheet\"T\n" +
 	"\n" +
 	"FieldValue\x12\x12\n" +
 	"\x03num\x18\x01 \x01(\x01H\x00R\x03num\x12\x14\n" +
@@ -315,48 +442,65 @@ const file_proto_compute_proto_rawDesc = "" +
 	"\aoutputs\x18\x02 \x03(\tR\aoutputs\x12!\n" +
 	"\fdoc_location\x18\x03 \x01(\tR\vdocLocation\"?\n" +
 	"\x0fComputeResponse\x12,\n" +
-	"\aoutputs\x18\x01 \x03(\v2\x12.spreadsheet.FieldR\aoutputs2Z\n" +
+	"\aoutputs\x18\x01 \x03(\v2\x12.spreadsheet.FieldR\aoutputs\"\xc4\x01\n" +
+	"\x14ExecuteMacrosRequest\x12!\n" +
+	"\fdoc_location\x18\x01 \x01(\tR\vdocLocation\x12\x1f\n" +
+	"\vmacro1_name\x18\x02 \x01(\tR\n" +
+	"macro1Name\x12\x1f\n" +
+	"\vmacro1_json\x18\x03 \x01(\tR\n" +
+	"macro1Json\x12\x1f\n" +
+	"\vmacro2_name\x18\x04 \x01(\tR\n" +
+	"macro2Name\x12&\n" +
+	"\x0fmacro2_pdf_path\x18\x05 \x01(\tR\rmacro2PdfPath\"K\n" +
+	"\x15ExecuteMacrosResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage2\xb2\x01\n" +
 	"\x12SpreadsheetService\x12D\n" +
-	"\aCompute\x12\x1b.spreadsheet.ComputeRequest\x1a\x1c.spreadsheet.ComputeResponseB/Z-github.com/shijith-chand/my-grpc-client/pb;pbb\x06proto3"
+	"\aCompute\x12\x1b.spreadsheet.ComputeRequest\x1a\x1c.spreadsheet.ComputeResponse\x12V\n" +
+	"\rExecuteMacros\x12!.spreadsheet.ExecuteMacrosRequest\x1a\".spreadsheet.ExecuteMacrosResponseB)Z'github.com/FuturaInsTech/gi-excel/protob\x06proto3"
 
 var (
-	file_proto_compute_proto_rawDescOnce sync.Once
-	file_proto_compute_proto_rawDescData []byte
+	file_compute_proto_rawDescOnce sync.Once
+	file_compute_proto_rawDescData []byte
 )
 
-func file_proto_compute_proto_rawDescGZIP() []byte {
-	file_proto_compute_proto_rawDescOnce.Do(func() {
-		file_proto_compute_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_proto_compute_proto_rawDesc), len(file_proto_compute_proto_rawDesc)))
+func file_compute_proto_rawDescGZIP() []byte {
+	file_compute_proto_rawDescOnce.Do(func() {
+		file_compute_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_compute_proto_rawDesc), len(file_compute_proto_rawDesc)))
 	})
-	return file_proto_compute_proto_rawDescData
+	return file_compute_proto_rawDescData
 }
 
-var file_proto_compute_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
-var file_proto_compute_proto_goTypes = []any{
-	(*FieldValue)(nil),      // 0: spreadsheet.FieldValue
-	(*Field)(nil),           // 1: spreadsheet.Field
-	(*ComputeRequest)(nil),  // 2: spreadsheet.ComputeRequest
-	(*ComputeResponse)(nil), // 3: spreadsheet.ComputeResponse
+var file_compute_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_compute_proto_goTypes = []any{
+	(*FieldValue)(nil),            // 0: spreadsheet.FieldValue
+	(*Field)(nil),                 // 1: spreadsheet.Field
+	(*ComputeRequest)(nil),        // 2: spreadsheet.ComputeRequest
+	(*ComputeResponse)(nil),       // 3: spreadsheet.ComputeResponse
+	(*ExecuteMacrosRequest)(nil),  // 4: spreadsheet.ExecuteMacrosRequest
+	(*ExecuteMacrosResponse)(nil), // 5: spreadsheet.ExecuteMacrosResponse
 }
-var file_proto_compute_proto_depIdxs = []int32{
+var file_compute_proto_depIdxs = []int32{
 	0, // 0: spreadsheet.Field.values:type_name -> spreadsheet.FieldValue
 	1, // 1: spreadsheet.ComputeRequest.inputs:type_name -> spreadsheet.Field
 	1, // 2: spreadsheet.ComputeResponse.outputs:type_name -> spreadsheet.Field
 	2, // 3: spreadsheet.SpreadsheetService.Compute:input_type -> spreadsheet.ComputeRequest
-	3, // 4: spreadsheet.SpreadsheetService.Compute:output_type -> spreadsheet.ComputeResponse
-	4, // [4:5] is the sub-list for method output_type
-	3, // [3:4] is the sub-list for method input_type
+	4, // 4: spreadsheet.SpreadsheetService.ExecuteMacros:input_type -> spreadsheet.ExecuteMacrosRequest
+	3, // 5: spreadsheet.SpreadsheetService.Compute:output_type -> spreadsheet.ComputeResponse
+	5, // 6: spreadsheet.SpreadsheetService.ExecuteMacros:output_type -> spreadsheet.ExecuteMacrosResponse
+	5, // [5:7] is the sub-list for method output_type
+	3, // [3:5] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name
 	3, // [3:3] is the sub-list for extension extendee
 	0, // [0:3] is the sub-list for field type_name
 }
 
-func init() { file_proto_compute_proto_init() }
-func file_proto_compute_proto_init() {
-	if File_proto_compute_proto != nil {
+func init() { file_compute_proto_init() }
+func file_compute_proto_init() {
+	if File_compute_proto != nil {
 		return
 	}
-	file_proto_compute_proto_msgTypes[0].OneofWrappers = []any{
+	file_compute_proto_msgTypes[0].OneofWrappers = []any{
 		(*FieldValue_Num)(nil),
 		(*FieldValue_Text)(nil),
 		(*FieldValue_Date)(nil),
@@ -365,17 +509,17 @@ func file_proto_compute_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_compute_proto_rawDesc), len(file_proto_compute_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_compute_proto_rawDesc), len(file_compute_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_proto_compute_proto_goTypes,
-		DependencyIndexes: file_proto_compute_proto_depIdxs,
-		MessageInfos:      file_proto_compute_proto_msgTypes,
+		GoTypes:           file_compute_proto_goTypes,
+		DependencyIndexes: file_compute_proto_depIdxs,
+		MessageInfos:      file_compute_proto_msgTypes,
 	}.Build()
-	File_proto_compute_proto = out.File
-	file_proto_compute_proto_goTypes = nil
-	file_proto_compute_proto_depIdxs = nil
+	File_compute_proto = out.File
+	file_compute_proto_goTypes = nil
+	file_compute_proto_depIdxs = nil
 }
