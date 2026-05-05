@@ -294,14 +294,13 @@ func (x *ComputeResponse) GetOutputs() []*Field {
 }
 
 type ExecuteMacrosRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	DocLocation   string                 `protobuf:"bytes,1,opt,name=doc_location,json=docLocation,proto3" json:"doc_location,omitempty"`         // path to .ods file
-	Macro1Name    string                 `protobuf:"bytes,2,opt,name=macro1_name,json=macro1Name,proto3" json:"macro1_name,omitempty"`            // e.g. PopulateInputsFromJSON
-	Macro1Json    string                 `protobuf:"bytes,3,opt,name=macro1_json,json=macro1Json,proto3" json:"macro1_json,omitempty"`            // JSON string input
-	Macro2Name    string                 `protobuf:"bytes,4,opt,name=macro2_name,json=macro2Name,proto3" json:"macro2_name,omitempty"`            // e.g. ExportOutputSheetToPDF
-	Macro2PdfPath string                 `protobuf:"bytes,5,opt,name=macro2_pdf_path,json=macro2PdfPath,proto3" json:"macro2_pdf_path,omitempty"` // full PDF output path
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	DocLocation     string                 `protobuf:"bytes,1,opt,name=doc_location,json=docLocation,proto3" json:"doc_location,omitempty"`                 // path to .ods file
+	Inputs          *Field                 `protobuf:"bytes,2,opt,name=inputs,proto3" json:"inputs,omitempty"`                                              //  input data to named range before pdf gen macro execution
+	PdfGenMacroName string                 `protobuf:"bytes,3,opt,name=pdf_gen_macro_name,json=pdfGenMacroName,proto3" json:"pdf_gen_macro_name,omitempty"` // e.g. PopulateInputsFromJSON
+	OutputPdfPath   string                 `protobuf:"bytes,4,opt,name=output_pdf_path,json=outputPdfPath,proto3" json:"output_pdf_path,omitempty"`         // full PDF output path
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *ExecuteMacrosRequest) Reset() {
@@ -341,30 +340,23 @@ func (x *ExecuteMacrosRequest) GetDocLocation() string {
 	return ""
 }
 
-func (x *ExecuteMacrosRequest) GetMacro1Name() string {
+func (x *ExecuteMacrosRequest) GetInputs() *Field {
 	if x != nil {
-		return x.Macro1Name
+		return x.Inputs
+	}
+	return nil
+}
+
+func (x *ExecuteMacrosRequest) GetPdfGenMacroName() string {
+	if x != nil {
+		return x.PdfGenMacroName
 	}
 	return ""
 }
 
-func (x *ExecuteMacrosRequest) GetMacro1Json() string {
+func (x *ExecuteMacrosRequest) GetOutputPdfPath() string {
 	if x != nil {
-		return x.Macro1Json
-	}
-	return ""
-}
-
-func (x *ExecuteMacrosRequest) GetMacro2Name() string {
-	if x != nil {
-		return x.Macro2Name
-	}
-	return ""
-}
-
-func (x *ExecuteMacrosRequest) GetMacro2PdfPath() string {
-	if x != nil {
-		return x.Macro2PdfPath
+		return x.OutputPdfPath
 	}
 	return ""
 }
@@ -442,16 +434,12 @@ const file_compute_proto_rawDesc = "" +
 	"\aoutputs\x18\x02 \x03(\tR\aoutputs\x12!\n" +
 	"\fdoc_location\x18\x03 \x01(\tR\vdocLocation\"?\n" +
 	"\x0fComputeResponse\x12,\n" +
-	"\aoutputs\x18\x01 \x03(\v2\x12.spreadsheet.FieldR\aoutputs\"\xc4\x01\n" +
+	"\aoutputs\x18\x01 \x03(\v2\x12.spreadsheet.FieldR\aoutputs\"\xba\x01\n" +
 	"\x14ExecuteMacrosRequest\x12!\n" +
-	"\fdoc_location\x18\x01 \x01(\tR\vdocLocation\x12\x1f\n" +
-	"\vmacro1_name\x18\x02 \x01(\tR\n" +
-	"macro1Name\x12\x1f\n" +
-	"\vmacro1_json\x18\x03 \x01(\tR\n" +
-	"macro1Json\x12\x1f\n" +
-	"\vmacro2_name\x18\x04 \x01(\tR\n" +
-	"macro2Name\x12&\n" +
-	"\x0fmacro2_pdf_path\x18\x05 \x01(\tR\rmacro2PdfPath\"K\n" +
+	"\fdoc_location\x18\x01 \x01(\tR\vdocLocation\x12*\n" +
+	"\x06inputs\x18\x02 \x01(\v2\x12.spreadsheet.FieldR\x06inputs\x12+\n" +
+	"\x12pdf_gen_macro_name\x18\x03 \x01(\tR\x0fpdfGenMacroName\x12&\n" +
+	"\x0foutput_pdf_path\x18\x04 \x01(\tR\routputPdfPath\"K\n" +
 	"\x15ExecuteMacrosResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage2\xb2\x01\n" +
@@ -484,15 +472,16 @@ var file_compute_proto_depIdxs = []int32{
 	0, // 0: spreadsheet.Field.values:type_name -> spreadsheet.FieldValue
 	1, // 1: spreadsheet.ComputeRequest.inputs:type_name -> spreadsheet.Field
 	1, // 2: spreadsheet.ComputeResponse.outputs:type_name -> spreadsheet.Field
-	2, // 3: spreadsheet.SpreadsheetService.Compute:input_type -> spreadsheet.ComputeRequest
-	4, // 4: spreadsheet.SpreadsheetService.ExecuteMacros:input_type -> spreadsheet.ExecuteMacrosRequest
-	3, // 5: spreadsheet.SpreadsheetService.Compute:output_type -> spreadsheet.ComputeResponse
-	5, // 6: spreadsheet.SpreadsheetService.ExecuteMacros:output_type -> spreadsheet.ExecuteMacrosResponse
-	5, // [5:7] is the sub-list for method output_type
-	3, // [3:5] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	1, // 3: spreadsheet.ExecuteMacrosRequest.inputs:type_name -> spreadsheet.Field
+	2, // 4: spreadsheet.SpreadsheetService.Compute:input_type -> spreadsheet.ComputeRequest
+	4, // 5: spreadsheet.SpreadsheetService.ExecuteMacros:input_type -> spreadsheet.ExecuteMacrosRequest
+	3, // 6: spreadsheet.SpreadsheetService.Compute:output_type -> spreadsheet.ComputeResponse
+	5, // 7: spreadsheet.SpreadsheetService.ExecuteMacros:output_type -> spreadsheet.ExecuteMacrosResponse
+	6, // [6:8] is the sub-list for method output_type
+	4, // [4:6] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_compute_proto_init() }

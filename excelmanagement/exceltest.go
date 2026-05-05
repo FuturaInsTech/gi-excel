@@ -458,26 +458,23 @@ func ExcelProcessorMacro(parentCtx context.Context, client proto.SpreadsheetServ
 		jsonNames[i] = f.JsonName
 	}
 
-	orderedValues := make([]string, len(jsonNames))
-
-	for i, key := range jsonNames {
-		if val, ok := requestMap[key]; ok {
-			orderedValues[i] = fmt.Sprintf("%v", val) // convert everything to string
-		} else {
-			orderedValues[i] = "" // or handle missing keys
-		}
-	}
-
-	result := map[string]interface{}{
-		"i_inputs": orderedValues,
-	}
-
-	// Print as JSON
-	jsonBytes1, _ := json.MarshalIndent(result, "", "  ")
-	fmt.Println(string(jsonBytes1))
-	//
-
 	if client == nil {
+		orderedValues := make([]string, len(jsonNames))
+		for i, key := range jsonNames {
+			if val, ok := requestMap[key]; ok {
+				orderedValues[i] = fmt.Sprintf("%v", val) // convert everything to string
+			} else {
+				orderedValues[i] = "" // or handle missing keys
+			}
+		}
+
+		result := map[string]interface{}{
+			"i_inputs": orderedValues,
+		}
+
+		// Print as JSON
+		jsonBytes1, _ := json.MarshalIndent(result, "", "  ")
+		fmt.Println(string(jsonBytes1))
 		excelmanager, err := NewExcelManager(e0001data.ExcelPath)
 		if err != nil {
 			return "", false, err
@@ -493,22 +490,35 @@ func ExcelProcessorMacro(parentCtx context.Context, client proto.SpreadsheetServ
 		return response, false, nil
 
 	} else {
+		orderedValues := make([]interface{}, len(jsonNames))
 
-		jsonBytes, err := json.Marshal(result)
-		if err != nil {
-			return "", false, fmt.Errorf("parsing request json string failed: %w", err)
+		for i, key := range jsonNames {
+			if val, ok := requestMap[key]; ok {
+				orderedValues[i] = val
+			} else {
+				return "", false, fmt.Errorf("key missing in input: %s", key)
+			}
 		}
-		jsonString := string(jsonBytes)
+
+		result := map[string]interface{}{
+			"i_inputs": orderedValues,
+		}
+
+		// Print as JSON
+		jsonBytes1, _ := json.MarshalIndent(result, "", "  ")
+		fmt.Println(string(jsonBytes1))
+
 		docPath := tenantid + "/" + e0001data.ExcelPath
-		req := &proto.ExecuteMacrosRequest{
-			DocLocation: docPath, // e.g. "C:\\file.ods"
-
-			Macro1Name: e0001data.MacroName1,
-			Macro1Json: jsonString, // your JSON input
-
-			Macro2Name:    e0001data.MacroName2,
-			Macro2PdfPath: pdfpath, // e.g. "C:\\out.pdf"
+		pdfDockerPath := tenantid + "/" + e0001data.PdfPath + "/" + pdfpath
+		req, err := BuildMacroRequest(result)
+		if err != nil {
+			fmt.Println("ERROR:", err)
+			return "", false, err
 		}
+		req.DocLocation = docPath
+		req.PdfGenMacroName = e0001data.MacroName2
+		req.OutputPdfPath = pdfDockerPath
+
 		timeoutStr := os.Getenv("GRPC_TIMEOUT_SECONDS")
 		timeoutSec, err := strconv.Atoi(timeoutStr)
 		if err != nil {
@@ -534,7 +544,6 @@ func ExcelProcessorMacro(parentCtx context.Context, client proto.SpreadsheetServ
 		return pdfpath, false, nil
 
 	}
-
 }
 
 func BuildComputeRequest(inputMap map[string]interface{}, outputNames []string) (*proto.ComputeRequest, error) {
@@ -593,6 +602,48 @@ func BuildComputeRequest(inputMap map[string]interface{}, outputNames []string) 
 	return &proto.ComputeRequest{
 		Inputs:  fields,
 		Outputs: outputNames,
+	}, nil
+}
+
+func BuildMacroRequest(inputMap map[string]interface{}) (*proto.ExecuteMacrosRequest, error) {
+	// Expect only one key in the map
+	if len(inputMap) != 1 {
+		return nil, fmt.Errorf("expected exactly one key in inputMap")
+	}
+
+	var fieldName string
+	var rawVals interface{}
+	for k, v := range inputMap {
+		fieldName = k
+		rawVals = v
+	}
+
+	// Assert the values are a slice
+	arr, ok := rawVals.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("values must be a slice")
+	}
+
+	// Flatten into []FieldValue
+	var flatValues []*proto.FieldValue
+
+	for _, r := range arr {
+		fv, err := convertToFieldValue(r)
+		if err != nil {
+			return nil, fmt.Errorf("field %s conversion error: %v", fieldName, err)
+		}
+		flatValues = append(flatValues, fv)
+	}
+
+	field := &proto.Field{
+		Name:   fieldName,
+		Values: flatValues,
+		Rows:   int32(len(arr)),
+		Cols:   1,
+	}
+
+	return &proto.ExecuteMacrosRequest{
+		Inputs: field,
 	}, nil
 }
 
