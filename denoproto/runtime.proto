@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package denoruntime;
+
+
+option go_package = "./denoproto";
+
+service FunctionRuntime {
+
+  rpc Execute(FunctionRequest)
+      returns (FunctionResponse);
+
+}
+
+message FunctionRequest {
+
+  string tenant_id = 1;
+
+  string function_name = 2;
+
+  string payload_json = 3;
+
+}
+
+message FunctionResponse {
+
+  bool success = 1;
+
+  string result_json = 2;
+
+  string error = 3;
+
+}
