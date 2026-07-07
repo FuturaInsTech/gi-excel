@@ -320,7 +320,7 @@ func ExcelProcessor(parentCtx context.Context, client proto.SpreadsheetServiceCl
 		case exceltypes.OneDArray:
 			if field.Orientation == exceltypes.Horizontal {
 				// formatted_outputmap[field.JsonName] = outputMap[key].([][]interface{})[0]
-				AddNestedValue(formatted_outputmap, field.JsonName, outputMap[key].([][]interface{})[0][0])
+				AddNestedValue(formatted_outputmap, field.JsonName, outputMap[key].([][]interface{})[0])
 			} else {
 				array := outputMap[key].([][]interface{})
 				interfaceSlice := make([]interface{}, len(array))
