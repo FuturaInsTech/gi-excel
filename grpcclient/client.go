@@ -6,10 +6,11 @@ import (
 
 	"github.com/FuturaInsTech/gi-excel/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type GRPCClients struct {
-	/*Conn               *grpc.ClientConn*/
+	Conn               *grpc.ClientConn
 	SpreadsheetService proto.SpreadsheetServiceClient
 }
 
@@ -19,16 +20,19 @@ func NewGRPCClients() *GRPCClients {
 		log.Fatal("GRPC_SERVER_URL not found in environment variables")
 	}
 
-	conn, err := grpc.Dial(grpcURL,
-		grpc.WithInsecure(),
-		grpc.WithBlock(),
+	conn, err := grpc.NewClient(
+		grpcURL,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		// ⭐ CRITICAL: Dynamically balances requests across expanding K8s replicas
+		grpc.WithDefaultServiceConfig(`{"loadBalancingConfig": [{"round_robin":{}}]}`),
 	)
+
 	if err != nil {
-		log.Fatalf("Failed to connect to gRPC: %v", err)
+		log.Fatalf("Failed to initialize gRPC client connection: %v", err)
 	}
 
 	return &GRPCClients{
-		/*Conn:               conn,*/
+		Conn:               conn,
 		SpreadsheetService: proto.NewSpreadsheetServiceClient(conn),
 	}
 }
