@@ -102,3 +102,32 @@ func (m *E0003Data) GetFormattedData(datamap map[string]string) map[string]inter
 	return nil
 
 }
+
+type E0004Data struct {
+	CommArray []E0004
+}
+type E0004 struct {
+	CommMode  string
+	CommField string
+	// YesOrNo   string
+}
+
+func (m *E0004Data) ParseData(datamap map[string]interface{}) {
+	jsonStr, err := json.Marshal(datamap)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+	// Convert json string to struct
+
+	if err := json.Unmarshal(jsonStr, &m); err != nil {
+		fmt.Println(err)
+	}
+
+}
+
+func (m *E0004Data) GetFormattedData(datamap map[string]string) map[string]interface{} {
+
+	return nil
+
+}
