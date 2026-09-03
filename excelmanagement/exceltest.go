@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/FuturaInsTech/gi-excel/excelparamTypes"
@@ -198,6 +199,27 @@ func ExcelProcessor(parentCtx context.Context, client proto.SpreadsheetServiceCl
 				outputfieldDataMap[field.ExcelName] = field
 			}
 			outputFields = append(outputFields, field.ExcelName)
+			//check if outerkeys and innerkeys are valid json array for map types,if not they could be a named range in
+			// the excel sheet and we need to add them to the outputFields to get their values from the excel sheet
+			switch field.FieldType {
+
+			case exceltypes.OneDMap:
+				if !IsValidJSONArray(field.OuterKeys) {
+					outputFields = append(outputFields, field.OuterKeys)
+				}
+			case exceltypes.TwoDMap:
+				if !IsValidJSONArray(field.InnerKeys) {
+					outputFields = append(outputFields, field.InnerKeys)
+				}
+				if !IsValidJSONArray(field.OuterKeys) {
+					outputFields = append(outputFields, field.OuterKeys)
+				}
+
+			case exceltypes.TwoDArrayMap:
+				if !IsValidJSONArray(field.InnerKeys) {
+					outputFields = append(outputFields, field.InnerKeys)
+				}
+			}
 
 		}
 	}
@@ -345,11 +367,45 @@ func ExcelProcessor(parentCtx context.Context, client proto.SpreadsheetServiceCl
 			}
 		case exceltypes.OneDMap:
 			var outerkeys []string
+			outerkeys2D, ok := outputMap[field.OuterKeys].([][]interface{})
+			if ok {
+				if field.Orientation == exceltypes.Horizontal {
+					firstRow := outerkeys2D[0]
+					outerkeys = make([]string, len(firstRow))
+					for i, val := range firstRow {
+						// Safely assert or format as string
+						if str, ok1 := val.(string); ok1 {
+							outerkeys[i] = str
+						} else {
+							// Fallback if the element isn't strictly a string (e.g. fmt.Sprint(val))
+							outerkeys[i] = fmt.Sprint(val)
+						}
+					}
+				} else {
 
-			// Unmarshal JSON string to a slice of strings
-			err := json.Unmarshal([]byte(field.OuterKeys), &outerkeys)
-			if err != nil {
-				fmt.Println("Error:Unable parse the map keys: ", err)
+					// Fill the interface slice
+					for _, row := range outerkeys2D {
+						if len(row) == 0 {
+							continue // Or outerkeys = append(outerkeys, "") depending on your requirement
+						}
+
+						if str, ok1 := row[0].(string); ok1 {
+							outerkeys = append(outerkeys, str)
+						} else {
+							// Fallback: convert other types (int, float, etc.) or skip
+							outerkeys = append(outerkeys, fmt.Sprint(row[0]))
+						}
+					}
+
+				}
+			} else {
+
+				// Unmarshal JSON string to a slice of strings
+				err := json.Unmarshal([]byte(field.OuterKeys), &outerkeys)
+				if err != nil {
+					fmt.Println("Error:Unable parse the map keys: ", err)
+				}
+
 			}
 
 			outputvalMap := make(map[string]interface{})
@@ -371,16 +427,88 @@ func ExcelProcessor(parentCtx context.Context, client proto.SpreadsheetServiceCl
 		case exceltypes.TwoDMap:
 			var outerkeys []string
 			var innerkeys []string
+			//parse outer keys
+			outerkeys2D, ok := outputMap[field.OuterKeys].([][]interface{})
+			if ok {
+				if field.Orientation == exceltypes.Vertical {
+					firstRow := outerkeys2D[0]
+					outerkeys = make([]string, len(firstRow))
+					for i, val := range firstRow {
+						// Safely assert or format as string
+						if str, ok1 := val.(string); ok1 {
+							outerkeys[i] = str
+						} else {
+							// Fallback if the element isn't strictly a string (e.g. fmt.Sprint(val))
+							outerkeys[i] = fmt.Sprint(val)
+						}
+					}
+				} else {
 
-			// Unmarshal JSON string to a slice of strings
-			err := json.Unmarshal([]byte(field.OuterKeys), &outerkeys)
-			if err != nil {
-				fmt.Println("Error:Unable parse the map outer keys: ", err)
+					// Fill the interface slice
+					for _, row := range outerkeys2D {
+						if len(row) == 0 {
+							continue // Or outerkeys = append(outerkeys, "") depending on your requirement
+						}
+
+						if str, ok1 := row[0].(string); ok1 {
+							outerkeys = append(outerkeys, str)
+						} else {
+							// Fallback: convert other types (int, float, etc.) or skip
+							outerkeys = append(outerkeys, fmt.Sprint(row[0]))
+						}
+					}
+
+				}
+			} else {
+
+				err := json.Unmarshal([]byte(field.OuterKeys), &outerkeys)
+				if err != nil {
+					fmt.Println("Error:Unable parse the map outer keys: ", err)
+				}
+
 			}
 
-			err = json.Unmarshal([]byte(field.InnerKeys), &innerkeys)
-			if err != nil {
-				fmt.Println("Error:Unable parse the map inner keys: ", err)
+			// parese inner keys
+			innerkeys2D, ok := outputMap[field.InnerKeys].([][]interface{})
+			if ok {
+				if field.Orientation == exceltypes.Horizontal {
+					firstRow := innerkeys2D[0]
+					innerkeys = make([]string, len(firstRow))
+					for i, val := range firstRow {
+						// Safely assert or format as string
+						if str, ok1 := val.(string); ok1 {
+							innerkeys[i] = str
+						} else {
+							// Fallback if the element isn't strictly a string (e.g. fmt.Sprint(val))
+							innerkeys[i] = fmt.Sprint(val)
+						}
+					}
+				} else {
+
+					// Fill the interface slice
+					for _, row := range innerkeys2D {
+						if len(row) == 0 {
+							continue // Or outerkeys = append(outerkeys, "") depending on your requirement
+						}
+
+						if str, ok1 := row[0].(string); ok1 {
+							innerkeys = append(innerkeys, str)
+						} else {
+							// Fallback: convert other types (int, float, etc.) or skip
+							innerkeys = append(innerkeys, fmt.Sprint(row[0]))
+						}
+					}
+
+				}
+			} else {
+
+				// Unmarshal JSON string to a slice of strings
+
+				err := json.Unmarshal([]byte(field.InnerKeys), &innerkeys)
+				if err != nil {
+					fmt.Println("Error:Unable parse the map inner keys: ", err)
+				}
+
 			}
 
 			var valArray [][]interface{}
@@ -407,12 +535,47 @@ func ExcelProcessor(parentCtx context.Context, client proto.SpreadsheetServiceCl
 			AddNestedValue(formatted_outputmap, field.JsonName, outputvalMap)
 		case exceltypes.TwoDArrayMap:
 			var innerkeys []string
+			// parese inner keys
+			innerkeys2D, ok := outputMap[field.InnerKeys].([][]interface{})
+			if ok {
+				if field.Orientation == exceltypes.Horizontal {
+					firstRow := innerkeys2D[0]
+					innerkeys = make([]string, len(firstRow))
+					for i, val := range firstRow {
+						// Safely assert or format as string
+						if str, ok1 := val.(string); ok1 {
+							innerkeys[i] = str
+						} else {
+							// Fallback if the element isn't strictly a string (e.g. fmt.Sprint(val))
+							innerkeys[i] = fmt.Sprint(val)
+						}
+					}
+				} else {
 
-			// Unmarshal JSON string to a slice of strings
+					// Fill the interface slice
+					for _, row := range innerkeys2D {
+						if len(row) == 0 {
+							continue // Or outerkeys = append(outerkeys, "") depending on your requirement
+						}
 
-			err := json.Unmarshal([]byte(field.InnerKeys), &innerkeys)
-			if err != nil {
-				fmt.Println("Error:Unable parse the map inner keys: ", err)
+						if str, ok1 := row[0].(string); ok1 {
+							innerkeys = append(innerkeys, str)
+						} else {
+							// Fallback: convert other types (int, float, etc.) or skip
+							innerkeys = append(innerkeys, fmt.Sprint(row[0]))
+						}
+					}
+
+				}
+			} else {
+
+				// Unmarshal JSON string to a slice of strings
+
+				err := json.Unmarshal([]byte(field.InnerKeys), &innerkeys)
+				if err != nil {
+					fmt.Println("Error:Unable parse the map inner keys: ", err)
+				}
+
 			}
 
 			var valArray [][]interface{}
@@ -729,4 +892,39 @@ func convertFromFieldValue(fv *proto.FieldValue) interface{} {
 	default:
 		return nil
 	}
+}
+
+func IsValidJSONArray(s string) bool {
+	dec := json.NewDecoder(strings.NewReader(s))
+
+	// Read first token
+	t, err := dec.Token()
+	if err != nil {
+		return false
+	}
+
+	// First delimiter must be '['
+	delim, ok := t.(json.Delim)
+	if !ok || delim != '[' {
+		return false
+	}
+
+	// Read remaining tokens to ensure valid syntax and closing ']'
+	for dec.More() {
+		var raw json.RawMessage
+		if err := dec.Decode(&raw); err != nil {
+			return false
+		}
+	}
+
+	// Read closing delimiter
+	t, err = dec.Token()
+	if err != nil || t != json.Delim(']') {
+		return false
+	}
+
+	// Ensure there is no trailing non-whitespace data
+	_, err = dec.Token()
+	//return err == io.EOF
+	return err != nil && err.Error() == "EOF"
 }
