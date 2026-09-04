@@ -269,12 +269,46 @@ func ExcelProcessor(parentCtx context.Context, client proto.SpreadsheetServiceCl
 
 	errexists := false
 	for key, field := range errorfieldDataMap {
-		var outerkeys []string
+		var innerkeys []string
+		innerkeys2D, ok := outputMap[field.InnerKeys].([][]interface{})
+		if ok {
+			if field.Orientation == exceltypes.Horizontal {
+				firstRow := innerkeys2D[0]
+				innerkeys = make([]string, len(firstRow))
+				for i, val := range firstRow {
+					// Safely assert or format as string
+					if str, ok1 := val.(string); ok1 {
+						innerkeys[i] = str
+					} else {
+						// Fallback if the element isn't strictly a string (e.g. fmt.Sprint(val))
+						innerkeys[i] = fmt.Sprint(val)
+					}
+				}
+			} else {
 
-		// Unmarshal JSON string to a slice of strings
-		err := json.Unmarshal([]byte(field.OuterKeys), &outerkeys)
-		if err != nil {
-			fmt.Println("Error:Unable parse the map keys: ", err)
+				// Fill the interface slice
+				for _, row := range innerkeys2D {
+					if len(row) == 0 {
+						continue // Or outerkeys = append(outerkeys, "") depending on your requirement
+					}
+
+					if str, ok1 := row[0].(string); ok1 {
+						innerkeys = append(innerkeys, str)
+					} else {
+						// Fallback: convert other types (int, float, etc.) or skip
+						innerkeys = append(innerkeys, fmt.Sprint(row[0]))
+					}
+				}
+
+			}
+		} else {
+
+			// Unmarshal JSON string to a slice of strings
+
+			err := json.Unmarshal([]byte(field.InnerKeys), &innerkeys)
+			if err != nil {
+				fmt.Println("Error:Unable parse the map keys: ", err)
+			}
 		}
 
 		var outputvalMaps []map[string]interface{}
@@ -287,7 +321,7 @@ func ExcelProcessor(parentCtx context.Context, client proto.SpreadsheetServiceCl
 				if len(errValues) > 2 && errValues[2] == "Y" {
 					rowMap := make(map[string]interface{})
 
-					for i, val := range outerkeys {
+					for i, val := range innerkeys {
 						rowMap[val] = errValues[i]
 					}
 					outputvalMaps = append(outputvalMaps, rowMap)
@@ -309,7 +343,7 @@ func ExcelProcessor(parentCtx context.Context, client proto.SpreadsheetServiceCl
 				// Only append if error exists
 				if len(record) > 2 && record[2] == "Y" {
 					rowMap := make(map[string]interface{})
-					for k, val := range outerkeys {
+					for k, val := range innerkeys {
 						rowMap[val] = record[k]
 					}
 					outputvalMaps = append(outputvalMaps, rowMap)
