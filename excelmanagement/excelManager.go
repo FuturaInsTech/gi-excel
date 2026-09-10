@@ -97,7 +97,11 @@ func (m *ExcelManager) Close() {
 func (m *ExcelManager) NamedRangeSetAndGet(input map[string]interface{}, output []interface{}) (map[string]interface{}, error) {
 	//process input
 	for key, value := range input {
-		namedRange := oleutil.MustCallMethod(m.names, "Item", key).ToIDispatch()
+		itemVariant, err := oleutil.CallMethod(m.names, "Item", key)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get input named range for key %s: %s", key, err.Error())
+		}
+		namedRange := itemVariant.ToIDispatch()
 		rangeObj := oleutil.MustGetProperty(namedRange, "RefersToRange").ToIDispatch()
 		// Get number of rows and columns in the named range
 		rows := oleutil.MustGetProperty(rangeObj, "Rows").ToIDispatch()
@@ -131,6 +135,7 @@ func (m *ExcelManager) NamedRangeSetAndGet(input map[string]interface{}, output 
 				cell.Release()
 			}
 		}
+		itemVariant.Clear()
 		rows.Release()
 		columns.Release()
 		namedRange.Release()
@@ -138,7 +143,11 @@ func (m *ExcelManager) NamedRangeSetAndGet(input map[string]interface{}, output 
 	}
 	outputMap := make(map[string]interface{})
 	for _, key := range output {
-		namedRange := oleutil.MustCallMethod(m.names, "Item", key).ToIDispatch()
+		itemVariant, err := oleutil.CallMethod(m.names, "Item", key)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get output named range for key %s: %s", key, err.Error())
+		}
+		namedRange := itemVariant.ToIDispatch()
 		rangeObj := oleutil.MustGetProperty(namedRange, "RefersToRange").ToIDispatch()
 
 		// Get number of rows and columns in the named range
@@ -158,7 +167,7 @@ func (m *ExcelManager) NamedRangeSetAndGet(input map[string]interface{}, output 
 		}
 
 		outputMap[key.(string)] = valueArray
-
+		itemVariant.Clear()
 		rows.Release()
 		columns.Release()
 		namedRange.Release()
