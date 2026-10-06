@@ -131,3 +131,34 @@ func (m *E0004Data) GetFormattedData(datamap map[string]string) map[string]inter
 	return nil
 
 }
+
+type E0005Data struct {
+	Titles []E0005
+}
+type E0005 struct {
+	Title          string
+	TitleValue     string
+	UiAlignment    string
+	AddInJson      string
+	InJsonGroupKey string
+}
+
+func (m *E0005Data) ParseData(datamap map[string]interface{}) {
+	jsonStr, err := json.Marshal(datamap)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+	// Convert json string to struct
+
+	if err := json.Unmarshal(jsonStr, &m); err != nil {
+		fmt.Println(err)
+	}
+
+}
+
+func (m *E0005Data) GetFormattedData(datamap map[string]string) map[string]interface{} {
+
+	return nil
+
+}
