@@ -558,8 +558,14 @@ func ExcelProcessor(parentCtx context.Context, client proto.SpreadsheetServiceCl
 
 			outputvalMap := make(map[string]interface{})
 			for i, mapkey1 := range outerkeys {
+				if mapkey1 == "" || mapkey1 == "<nil>" {
+					break
+				}
 				outputvalMap1 := make(map[string]interface{})
 				for j, mapkey2 := range innerkeys {
+					if mapkey2 == "" || mapkey2 == "<nil>" {
+						break
+					}
 					outputvalMap1[mapkey2] = valArray[i][j]
 				}
 				outputvalMap[mapkey1] = outputvalMap1
