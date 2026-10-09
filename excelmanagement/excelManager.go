@@ -135,11 +135,11 @@ func (m *ExcelManager) NamedRangeSetAndGet(input map[string]interface{}, output 
 				cell.Release()
 			}
 		}
-		itemVariant.Clear()
 		rows.Release()
 		columns.Release()
-		namedRange.Release()
 		rangeObj.Release()
+		namedRange.Release()
+		itemVariant.Clear()
 	}
 	outputMap := make(map[string]interface{})
 	for _, key := range output {
@@ -167,11 +167,11 @@ func (m *ExcelManager) NamedRangeSetAndGet(input map[string]interface{}, output 
 		}
 
 		outputMap[key.(string)] = valueArray
-		itemVariant.Clear()
 		rows.Release()
 		columns.Release()
-		namedRange.Release()
 		rangeObj.Release()
+		namedRange.Release()
+		itemVariant.Clear()
 	}
 
 	return outputMap, nil
@@ -291,8 +291,8 @@ func (m *ExcelManager) NamedRangeSetAndGet1(inputkeys []string, inputvalues [][]
 		rowsCountInp[key] = int(oleutil.MustGetProperty(rowsInp[key], "Count").Val) // Get number of rows
 		colsCountInp[key] = int(oleutil.MustGetProperty(columns, "Count").Val)      // Get number of columns
 		columns.Release()
-		namedRange.Release()
 		rangeObj.Release()
+		namedRange.Release()
 	}
 
 	for _, key := range outputkeys {
@@ -303,8 +303,8 @@ func (m *ExcelManager) NamedRangeSetAndGet1(inputkeys []string, inputvalues [][]
 		rowsCountOp[key] = int(oleutil.MustGetProperty(rowsOp[key], "Count").Val) // Get number of rows
 		colsCountOp[key] = int(oleutil.MustGetProperty(columns, "Count").Val)     // Get number of columns
 		columns.Release()
-		namedRange.Release()
 		rangeObj.Release()
+		namedRange.Release()
 	}
 
 	for rowind, inputValue := range inputvalues {
