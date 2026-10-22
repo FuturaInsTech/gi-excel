@@ -102,10 +102,18 @@ func (m *ExcelManager) NamedRangeSetAndGet(input map[string]interface{}, output 
 			return nil, fmt.Errorf("failed to get input named range for key %s: %s", key, err.Error())
 		}
 		namedRange := itemVariant.ToIDispatch()
-		rangeObj := oleutil.MustGetProperty(namedRange, "RefersToRange").ToIDispatch()
+		//  rangeObj := oleutil.MustGetProperty(namedRange, "RefersToRange").ToIDispatch()
+		rangeVariant := oleutil.MustGetProperty(namedRange, "RefersToRange")
+		rangeObj := rangeVariant.ToIDispatch()
 		// Get number of rows and columns in the named range
-		rows := oleutil.MustGetProperty(rangeObj, "Rows").ToIDispatch()
-		columns := oleutil.MustGetProperty(rangeObj, "Columns").ToIDispatch()
+		// rows := oleutil.MustGetProperty(rangeObj, "Rows").ToIDispatch()
+		rowsVariant := oleutil.MustGetProperty(rangeObj, "Rows")
+		rows := rowsVariant.ToIDispatch()
+
+		// columns := oleutil.MustGetProperty(rangeObj, "Columns").ToIDispatch()
+		columnsVariant := oleutil.MustGetProperty(rangeObj, "Columns")
+		columns := columnsVariant.ToIDispatch()
+
 		rowCount := int(oleutil.MustGetProperty(rows, "Count").Val)       // Get number of rows
 		columnCount := int(oleutil.MustGetProperty(columns, "Count").Val) // Get number of columns
 		input2dArray := make([][]interface{}, 0)
@@ -135,11 +143,17 @@ func (m *ExcelManager) NamedRangeSetAndGet(input map[string]interface{}, output 
 				cell.Release()
 			}
 		}
-		rows.Release()
-		columns.Release()
-		rangeObj.Release()
-		namedRange.Release()
+		// rows.Release()
+		// columns.Release()
+		// rangeObj.Release()
+		// namedRange.Release()
+		// itemVariant.Clear()
+
+		rowsVariant.Clear()
+		columnsVariant.Clear()
+		rangeVariant.Clear()
 		itemVariant.Clear()
+
 	}
 	outputMap := make(map[string]interface{})
 	for _, key := range output {
@@ -148,11 +162,19 @@ func (m *ExcelManager) NamedRangeSetAndGet(input map[string]interface{}, output 
 			return nil, fmt.Errorf("failed to get output named range for key %s: %s", key, err.Error())
 		}
 		namedRange := itemVariant.ToIDispatch()
-		rangeObj := oleutil.MustGetProperty(namedRange, "RefersToRange").ToIDispatch()
+
+		// rangeObj := oleutil.MustGetProperty(namedRange, "RefersToRange").ToIDispatch()
+		rangeVariant := oleutil.MustGetProperty(namedRange, "RefersToRange")
+		rangeObj := rangeVariant.ToIDispatch()
 
 		// Get number of rows and columns in the named range
-		rows := oleutil.MustGetProperty(rangeObj, "Rows").ToIDispatch()
-		columns := oleutil.MustGetProperty(rangeObj, "Columns").ToIDispatch()
+		// rows := oleutil.MustGetProperty(rangeObj, "Rows").ToIDispatch()
+		rowsVariant := oleutil.MustGetProperty(rangeObj, "Rows")
+		rows := rowsVariant.ToIDispatch()
+
+		// columns := oleutil.MustGetProperty(rangeObj, "Columns").ToIDispatch()
+		columnsVariant := oleutil.MustGetProperty(rangeObj, "Columns")
+		columns := columnsVariant.ToIDispatch()
 
 		rowCount := int(oleutil.MustGetProperty(rows, "Count").Val)       // Get number of rows
 		columnCount := int(oleutil.MustGetProperty(columns, "Count").Val) // Get number of columns
@@ -167,10 +189,15 @@ func (m *ExcelManager) NamedRangeSetAndGet(input map[string]interface{}, output 
 		}
 
 		outputMap[key.(string)] = valueArray
-		rows.Release()
-		columns.Release()
-		rangeObj.Release()
-		namedRange.Release()
+		// rows.Release()
+		// columns.Release()
+		// rangeObj.Release()
+		// namedRange.Release()
+		// itemVariant.Clear()
+
+		rowsVariant.Clear()
+		columnsVariant.Clear()
+		rangeVariant.Clear()
 		itemVariant.Clear()
 	}
 
